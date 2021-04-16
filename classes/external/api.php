@@ -22,7 +22,6 @@ use external_multiple_structure;
 use external_util;
 use external_value;
 use moodle_exception;
-use quiz;
 use stdClass;
 
 /**
@@ -136,7 +135,7 @@ class api extends external_api {
                     'courseid' => $quiz->course,
                     'questions' => [],
                 ];
-                $quizobj = quiz::create($quiz->id, $USER->id);
+                $quizobj = \quiz::create($quiz->id, $USER->id);
                 $quizobj->preload_questions();
                 $quizobj->load_questions();
                 $questions = $quizobj->get_questions();
@@ -205,12 +204,13 @@ class api extends external_api {
 
         // @todo figure out how to load all quiz records in one request, $DB->get_records() won't do apparently. [ST 2021/04/16]
         foreach($params['quizids'] as $quizid) {
-            /* @see mod_quiz_external::validate_quiz() [ST 2021/04/16] */
             // validate against the quiz-owning course context.
             $quiz = $DB->get_record('quiz', array('id' => $quizid), '*');
             if (!$quiz) { // ignore missing courses
                 continue;
             }
+
+            /* @see \mod_quiz_external::validate_quiz() */
             list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
             try {
@@ -221,6 +221,8 @@ class api extends external_api {
                 $exceptionparam->courseid = $course->id;
                 throw new moodle_exception('errorcoursecontextnotvalid', 'webservice', '', $exceptionparam);
             }
+
+            // load quiz and questions
             $quizobj = quiz::create($quiz->id, $USER->id);
             $quizobj->preload_questions();
             $quizobj->load_questions();
@@ -278,10 +280,83 @@ class api extends external_api {
     /**
      * @param array $params
      * @return array
+     * @see \mod_quiz_external::get_user_attempts()
      */
     public static function get_attempts($params = array()) : array {
+        global $DB, $USER, $CFG;
+        require_once $CFG->dirroot . '/lib/modinfolib.php';
+        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
+
         $rhett = [];
-        // @todo implement. [ST 2021/04/14]
+
+        $params = self::validate_parameters(self::get_attempts_parameters(),
+            ['quizids' => $params]);
+
+        if (empty($params)) {
+            return $rhett;
+        }
+
+        foreach($params['quizids'] as $quizid) {
+            // validate against the quiz-owning course context.
+            $quiz = $DB->get_record('quiz', array('id' => $quizid), '*');
+            if (!$quiz) { // ignore missing courses
+                continue;
+            }
+
+            /* @see \mod_quiz_external::validate_quiz() */
+            list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
+            $context = context_module::instance($cm->id);
+            try {
+                self::validate_context($context);
+            } catch (Exception $e) {
+                $exceptionparam = new stdClass();
+                $exceptionparam->message = $e->getMessage();
+                $exceptionparam->courseid = $course->id;
+                throw new moodle_exception(
+                    'errorcoursecontextnotvalid',
+                    'webservice',
+                    '',
+                    $exceptionparam
+                );
+            }
+
+            // load finalized attempts
+            // @todo figure out if only finalized attempts should be included. [ST 2021/04/16]
+            list($sql, $sqlparams) = $DB->get_in_or_equal($params['quizids'], SQL_PARAMS_NAMED);
+            $sqlparams['state1'] = \quiz_attempt::FINISHED;
+            $sqlparams['state2'] = \quiz_attempt::ABANDONED;
+            $quizattempts = $DB->get_records_select(
+                'quiz_attempts',
+                "quiz ${sql} AND state IN (:state1, :state2)",
+                $sqlparams,
+                'quiz'
+            );
+
+            foreach ($quizattempts as $quizattempt) {
+                $ret = [
+                    'id' => $quizattempt->id,
+                    'timestart' => $quizattempt->timestart, // @todo convert to datetime string? [ST 2021/04/16]
+                    'timefinish' => $quizattempt->timefinish, // @todo convert to datetime string? [ST 2021/04/16]
+                    'quizid' => $quizattempt->quiz,
+                    'userid' => $quizattempt->userid,
+                    'questions' => [],
+                ];
+
+                $quba = \question_engine::load_questions_usage_by_activity($quizattempt->uniqueid);
+                $slots = $quba->get_slots();
+                foreach ($slots as $slot) {
+                    $questionattempt = $quba->get_question_attempt($slot);
+                    $ret['questions'][] = [
+                        'id' => $questionattempt->get_question_id(),
+                        'mark' => $questionattempt->get_mark(),
+                        'answer' => external_format_string($questionattempt->get_response_summary(), $context->id),
+                    ];
+                }
+
+                $rhett[] = $ret;
+            }
+        }
+
         return $rhett;
     }
 
@@ -307,8 +382,16 @@ class api extends external_api {
                 'id' => new external_value(PARAM_INT, 'Attempt ID', VALUE_REQUIRED),
                 'quizid' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 'userid' => new external_value(PARAM_INT, 'User ID', VALUE_REQUIRED),
-                // @todo add question ids, start date, end date, marks attained, final submitted responses. [ST 2021/04/14]
-            ])
+                'timestart' => new external_value(PARAM_INT, 'Timestamp of when this attempt was started.', VALUE_REQUIRED),
+                'timefinish' => new external_value(PARAM_INT, 'Timestamp of when this attempt was finished.', VALUE_REQUIRED),
+                'questions' => new external_multiple_structure(
+                    new external_single_structure([
+                        'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
+                        'mark' => new external_value(PARAM_FLOAT, 'Mark received', VALUE_REQUIRED),
+                        'answer' => new external_value(PARAM_RAW, 'Answer given', VALUE_REQUIRED),
+                    ]),
+                ),
+            ]),
         );
     }
 }
