@@ -22,6 +22,7 @@ use external_multiple_structure;
 use external_util;
 use external_value;
 use moodle_exception;
+use quiz;
 use stdClass;
 
 /**
@@ -108,7 +109,7 @@ class api extends external_api {
      * @return array
      */
     public static function get_quizzes($params = array()) : array {
-        global $CFG;
+        global $USER, $CFG;
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
         $rhett = [];
@@ -129,11 +130,24 @@ class api extends external_api {
         foreach ($quizzes as $quiz) {
             $context = context_module::instance($quiz->coursemodule);
             if (has_capability('mod/quiz:view', $context)) {
-                $rhett[] = [
+                $ret = [
                     'id' => $quiz->id,
                     'name' => external_format_string($quiz->name, $context->id),
                     'courseid' => $quiz->course,
+                    'questions' => [],
                 ];
+                $quizobj = quiz::create($quiz->id, $USER->id);
+                $quizobj->preload_questions();
+                $quizobj->load_questions();
+                $questions = $quizobj->get_questions();
+                foreach ($questions as $question) {
+                    $ret['questions'][] = [
+                        'id' => $question->id,
+                        'maxmark' => $question->maxmark,
+                    ];
+                }
+
+                $rhett[] = $ret;
             }
         }
 
@@ -162,8 +176,13 @@ class api extends external_api {
                 'id' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 'name' => new external_value(PARAM_TEXT, 'Quiz Name', VALUE_REQUIRED),
                 'courseid' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
-                // @todo return "max marks", whatever that is. [ST 2021/04/14]
-            ])
+                'questions' => new external_multiple_structure(
+                    new external_single_structure([
+                        'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
+                        'maxmark' => new external_value(PARAM_FLOAT, 'Maximum marks value for this quiz.', VALUE_REQUIRED),
+                    ]),
+                ),
+            ]),
         );
     }
 
