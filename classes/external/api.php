@@ -143,14 +143,17 @@ class api extends external_api {
                 foreach ($questions as $question) {
                     $ret['questions'][] = [
                         'id' => $question->id,
-                        'maxmark' => $question->maxmark,
+                        'name' => external_format_string($question->name, $context->id),
+                        'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
+                        'maxmarks' => $question->maxmark,
+                        'defaultmarks' => $question->defaultmark,
+                        'type' => $question->qtype,
                     ];
                 }
 
                 $rhett[] = $ret;
             }
         }
-
         return $rhett;
     }
 
@@ -179,7 +182,11 @@ class api extends external_api {
                 'questions' => new external_multiple_structure(
                     new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
-                        'maxmark' => new external_value(PARAM_FLOAT, 'Maximum marks value for this quiz.', VALUE_REQUIRED),
+                        'name' => new external_value(PARAM_TEXT, 'Question name', VALUE_REQUIRED),
+                        'text' => new external_value(PARAM_RAW, 'Question text', VALUE_REQUIRED),
+                        'type' => new external_value(PARAM_TEXT, 'Question type', VALUE_REQUIRED),
+                        'maxmarks' => new external_value(PARAM_FLOAT, 'Maximum marks for this question.', VALUE_REQUIRED),
+                        'defaultmarks' => new external_value(PARAM_FLOAT, 'Default marks for this question.', VALUE_REQUIRED),
                     ]),
                 ),
             ]),
