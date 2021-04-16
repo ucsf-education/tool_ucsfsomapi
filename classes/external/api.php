@@ -110,7 +110,7 @@ class api extends external_api {
      */
     public static function get_quizzes($params = array()) : array {
         global $USER, $CFG;
-        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
 
         $rhett = [];
 
@@ -198,9 +198,58 @@ class api extends external_api {
      * @return array
      */
     public static function get_questions($params = array()) : array {
+        global $DB, $USER, $CFG;
+        require_once $CFG->dirroot . '/lib/modinfolib.php';
+        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
+
         $rhett = [];
-        // @todo implement. [ST 2021/04/14]
-        return $rhett;
+
+        $params = self::validate_parameters(self::get_questions_parameters(),
+            ['quizids' => $params]);
+
+        if (empty($params)) {
+            return $rhett;
+        }
+
+        // @todo figure out how to load all quiz records in one request, $DB->get_records() won't do apparently. [ST 2021/04/16]
+        foreach($params['quizids'] as $quizid) {
+            /* @see mod_quiz_external::validate_quiz() [ST 2021/04/16] */
+            // validate against the quiz-owning course context.
+            $quiz = $DB->get_record('quiz', array('id' => $quizid), '*');
+            if (!$quiz) { // ignore missing courses
+                continue;
+            }
+            list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
+            $context = context_module::instance($cm->id);
+            try {
+                self::validate_context($context);
+            } catch (Exception $e) {
+                $exceptionparam = new stdClass();
+                $exceptionparam->message = $e->getMessage();
+                $exceptionparam->courseid = $course->id;
+                throw new moodle_exception('errorcoursecontextnotvalid', 'webservice', '', $exceptionparam);
+            }
+            $quizobj = quiz::create($quiz->id, $USER->id);
+            $quizobj->preload_questions();
+            $quizobj->load_questions();
+            $questions = $quizobj->get_questions();
+
+            foreach ($questions as $question) {
+                if (! array_key_exists($question->id, $rhett)) {
+                    $rhett[$question->id] = [
+                        'id' => $question->id,
+                        'name' => external_format_string($question->name, $context->id),
+                        'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
+                        'defaultmarks' => $question->defaultmark,
+                        'type' => $question->qtype,
+                        'quizzes' => [ $quiz->id ],
+                    ];
+                } else {
+                    $rhett[$question->id]['quizzes'][] = $quiz->id;
+                }
+            }
+        }
+        return array_values($rhett);
     }
 
     /**
@@ -208,9 +257,9 @@ class api extends external_api {
      */
     public static function get_questions_parameters() : external_function_parameters {
         return new external_function_parameters(
-            ['courseids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Course ID')
-                , 'List of course IDs.',
+            ['quizids' => new external_multiple_structure(
+                new external_value(PARAM_INT, 'Quiz ID')
+                , 'List of quiz IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -223,12 +272,14 @@ class api extends external_api {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
-                'name' => new external_value(PARAM_TEXT, 'Question Name', VALUE_REQUIRED),
-                'quizid' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
-                'text' => new external_value(PARAM_TEXT, 'Question Test', VALUE_REQUIRED),
-                'type' => new external_value(PARAM_TEXT, 'Question Type', VALUE_REQUIRED),
-                // @todo add marks to output [ST 2021/04/14]
-            ])
+                'name' => new external_value(PARAM_TEXT, 'Question name', VALUE_REQUIRED),
+                'text' => new external_value(PARAM_RAW, 'Question text', VALUE_REQUIRED),
+                'type' => new external_value(PARAM_TEXT, 'Question type', VALUE_REQUIRED),
+                'defaultmarks' => new external_value(PARAM_FLOAT, 'Default marks for this question.', VALUE_REQUIRED),
+                'quizzes' => new external_multiple_structure(
+                    new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
+                ),
+            ]),
         );
     }
 
