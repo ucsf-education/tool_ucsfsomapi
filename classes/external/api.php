@@ -43,7 +43,7 @@ class api extends external_api {
         $params = self::validate_parameters(self::get_courses_parameters(),
             ['categoryids' => $params]);
 
-        if (empty($params)) {
+        if (empty($params['categoryids'])) {
             return $rhett;
         }
 
@@ -115,10 +115,6 @@ class api extends external_api {
 
         $params = self::validate_parameters(self::get_quizzes_parameters(),
             ['courseids' => $params]);
-
-        if (empty($params)) {
-            return $rhett;
-        }
 
         // Get the quizzes in this course, this function checks users visibility permissions.
         // We can avoid then additional validate_context calls.
@@ -198,18 +194,9 @@ class api extends external_api {
         $params = self::validate_parameters(self::get_questions_parameters(),
             ['quizids' => $params]);
 
-        if (empty($params)) {
-            return $rhett;
-        }
+        $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
-        // @todo figure out how to load all quiz records in one request, $DB->get_records() won't do apparently. [ST 2021/04/16]
-        foreach($params['quizids'] as $quizid) {
-            // validate against the quiz-owning course context.
-            $quiz = $DB->get_record('quiz', array('id' => $quizid), '*');
-            if (!$quiz) { // ignore missing courses
-                continue;
-            }
-
+        foreach($quizzes as $quiz) {
             /* @see \mod_quiz_external::validate_quiz() */
             list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
@@ -283,7 +270,7 @@ class api extends external_api {
      * @see \mod_quiz_external::get_user_attempts()
      */
     public static function get_attempts($params = array()) : array {
-        global $DB, $USER, $CFG;
+        global $DB, $CFG;
         require_once $CFG->dirroot . '/lib/modinfolib.php';
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
 
@@ -292,17 +279,10 @@ class api extends external_api {
         $params = self::validate_parameters(self::get_attempts_parameters(),
             ['quizids' => $params]);
 
-        if (empty($params)) {
-            return $rhett;
-        }
+        $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
-        foreach($params['quizids'] as $quizid) {
+        foreach($quizzes as $quiz) {
             // validate against the quiz-owning course context.
-            $quiz = $DB->get_record('quiz', array('id' => $quizid), '*');
-            if (!$quiz) { // ignore missing courses
-                continue;
-            }
-
             /* @see \mod_quiz_external::validate_quiz() */
             list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
@@ -392,6 +372,26 @@ class api extends external_api {
                     ]),
                 ),
             ]),
+        );
+    }
+
+    /**
+     * @param array $quizids
+     * @return array
+     * @throws \coding_exception
+     * @throws \dml_exception
+     */
+    protected static function get_quizzes_by_ids($quizids = []) : array {
+        global $DB;
+        if (empty($quizids)) {
+            return [];
+        }
+        list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+        return $DB->get_records_select(
+            'quiz',
+            "id ${sql}",
+            $sqlparams,
+            'id'
         );
     }
 }
