@@ -125,7 +125,7 @@ class api extends external_api {
 
         foreach ($quizzes as $quiz) {
             $context = context_module::instance($quiz->coursemodule);
-            if (has_capability('mod/quiz:view', $context)) {
+            if (has_capability('mod/quiz:viewreports', $context)) {
                 $ret = [
                     'id' => $quiz->id,
                     'name' => external_format_string($quiz->name, $context->id),
@@ -302,9 +302,8 @@ class api extends external_api {
             }
 
             // load finalized attempts
-            $quizids = clean_param_array($params['quizids'], PARAM_INT);
             // @todo figure out if only finalized attempts should be included. [ST 2021/04/16]
-            list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+            list($sql, $sqlparams) = $DB->get_in_or_equal($quiz->id, SQL_PARAMS_NAMED);
             $sqlparams['state1'] = \quiz_attempt::FINISHED;
             $sqlparams['state2'] = \quiz_attempt::ABANDONED;
             $quizattempts = $DB->get_records_select(
