@@ -24,7 +24,7 @@ $functions = [
         'methodname' => 'get_quizzes',
         'description' => 'Gets all quizzes in given courses.',
         'type' => 'read',
-        'capabilities' => 'moodle/quiz:view',
+        'capabilities' => 'mod/quiz:viewreports',
         'ajax' => false,
         'services' => [UCSF_SOM_API_SERVICE],
     ],
