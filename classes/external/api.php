@@ -46,7 +46,8 @@ class api extends external_api {
             return $rhett;
         }
 
-        $courses = $DB->get_records_list('course', 'category', $params['categoryids']);
+        $categoryids = clean_param_array($params['categoryids'], PARAM_INT);
+        $courses = $DB->get_records_list('course', 'category', $categoryids);
         foreach ($courses as $course) {
             // now security checks
             $context = \context_course::instance($course->id, IGNORE_MISSING);
@@ -118,7 +119,8 @@ class api extends external_api {
         // Get the quizzes in this course, this function checks users visibility permissions.
         // We can avoid then additional validate_context calls.
         // @todo figure out what to do with warnings. (probably eat them) [ST 2021/04/14]
-        list($courses, $warnings) = external_util::validate_courses($params['courseids']);
+        $courseids = clean_param_array($params['courseids'], PARAM_INT);
+        list($courses, $warnings) = external_util::validate_courses($courseids);
         $quizzes = get_all_instances_in_courses("quiz", $courses);
 
         foreach ($quizzes as $quiz) {
@@ -209,7 +211,7 @@ class api extends external_api {
             }
 
             // load quiz and questions
-            $quizobj = quiz::create($quiz->id, $USER->id);
+            $quizobj = \quiz::create($quiz->id, $USER->id);
             $quizobj->preload_questions();
             $quizobj->load_questions();
             $questions = $quizobj->get_questions();
@@ -300,8 +302,9 @@ class api extends external_api {
             }
 
             // load finalized attempts
+            $quizids = clean_param_array($params['quizids'], PARAM_INT);
             // @todo figure out if only finalized attempts should be included. [ST 2021/04/16]
-            list($sql, $sqlparams) = $DB->get_in_or_equal($params['quizids'], SQL_PARAMS_NAMED);
+            list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
             $sqlparams['state1'] = \quiz_attempt::FINISHED;
             $sqlparams['state2'] = \quiz_attempt::ABANDONED;
             $quizattempts = $DB->get_records_select(
@@ -390,7 +393,10 @@ class api extends external_api {
         if (empty($params['userids'])) {
             return [];
         }
-        list($sql, $sqlparams) = $DB->get_in_or_equal($params['userids'], SQL_PARAMS_NAMED);
+
+        $userids = clean_param_array($params['userids'], PARAM_INT);
+
+        list($sql, $sqlparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         // @todo Should we include deleted user accounts here? [ST 2021/04/26]
         $users = $DB->get_records_select(
             'user',
@@ -445,6 +451,7 @@ class api extends external_api {
         if (empty($quizids)) {
             return [];
         }
+        $quizids = clean_param_array($quizids, PARAM_INT);
         list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
         return $DB->get_records_select(
             'quiz',
