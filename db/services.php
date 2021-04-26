@@ -46,7 +46,15 @@ $functions = [
         'ajax' => false,
         'services' => [UCSF_SOM_API_SERVICE],
     ],
-    // @todo declare user endpoint here. [ST 2021/04/14]
+    'tool_ucsfsomapi_get_users' => array(
+        'classname' => 'tool_ucsfsomapi\external\api',
+        'methodname' => 'get_users',
+        'description' => 'Gets UC ids for given users.',
+        'type' => 'read',
+        'capabilities' => 'moodle/user:viewdetails',
+        'ajax' => false,
+        'services' => [UCSF_SOM_API_SERVICE],
+    ),
 ];
 
 $services = [

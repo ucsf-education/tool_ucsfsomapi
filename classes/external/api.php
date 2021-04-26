@@ -26,7 +26,6 @@ use stdClass;
 
 /**
  * Web Service provider.
- * @todo Add user endpoint. [ST 2021/04/14]
  */
 class api extends external_api {
 
@@ -371,6 +370,66 @@ class api extends external_api {
                         'answer' => new external_value(PARAM_RAW, 'Answer given', VALUE_REQUIRED),
                     ]),
                 ),
+            ]),
+        );
+    }
+
+    /**
+     * @param array $params
+     * @return array
+     * @see \core_user_external::get_users()
+     */
+    public static function get_users($params = array()) : array {
+        global $DB;
+
+        $rhett = [];
+
+        $params = self::validate_parameters(self::get_users_parameters(),
+            ['userids' => $params]);
+
+        if (empty($params['userids'])) {
+            return [];
+        }
+        list($sql, $sqlparams) = $DB->get_in_or_equal($params['userids'], SQL_PARAMS_NAMED);
+        // @todo Should we include deleted user accounts here? [ST 2021/04/26]
+        $users = $DB->get_records_select(
+            'user',
+            "id ${sql} AND deleted = 0",
+            $sqlparams,
+            'id'
+        );
+
+        foreach ($users as $user) {
+            $rhett[] = [
+                'id' => $user->id,
+                'ucid' => $user->idnumber,
+            ];
+        }
+
+        return $rhett;
+    }
+
+    /**
+     * @return external_function_parameters
+     */
+    public static function get_users_parameters() : external_function_parameters {
+        return new external_function_parameters(
+            ['userids' => new external_multiple_structure(
+                new external_value(PARAM_INT, 'User ID')
+                , 'List of user IDs.',
+                VALUE_REQUIRED
+            )]
+        );
+    }
+
+    /**
+     * @return external_description
+     */
+    public static function get_users_returns() : external_description {
+        return new external_multiple_structure(
+            new external_single_structure([
+                'id' => new external_value(PARAM_INT, 'User ID', VALUE_REQUIRED),
+                'ucid' => new external_value(PARAM_TEXT, 'UC ID', VALUE_REQUIRED),
             ]),
         );
     }
