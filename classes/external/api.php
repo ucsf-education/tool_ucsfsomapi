@@ -224,7 +224,7 @@ class api extends external_api {
                         'id' => $question->id,
                         'name' => external_format_string($question->name, $context->id),
                         'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
-                        'defaultmarks' => round($question->defaultmark, 2) * 100,
+                        'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
                         'quizzes' => [ $quiz->id ],
                     ];
@@ -331,7 +331,7 @@ class api extends external_api {
                     $questionattempt = $quba->get_question_attempt($slot);
                     $ret['questions'][] = [
                         'id' => $questionattempt->get_question_id(),
-                        'mark' => round($questionattempt->get_mark(), 2),
+                        'mark' => $questionattempt->get_mark(),
                         'answer' => external_format_string($questionattempt->get_response_summary(), $context->id),
                     ];
                 }
