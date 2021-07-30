@@ -130,6 +130,7 @@ class api extends external_api {
                     'id' => $quiz->id,
                     'name' => external_format_string($quiz->name, $context->id),
                     'courseid' => $quiz->course,
+                    'coursemoduleid' => $quiz->coursemodule,
                     'questions' => [],
                 ];
                 $quizobj = \quiz::create($quiz->id, $USER->id);
@@ -171,6 +172,7 @@ class api extends external_api {
                 'id' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 'name' => new external_value(PARAM_TEXT, 'Quiz Name', VALUE_REQUIRED),
                 'courseid' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
+                'coursemoduleid' =>  new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
                 'questions' => new external_multiple_structure(
                     new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
