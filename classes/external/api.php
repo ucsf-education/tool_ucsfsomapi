@@ -130,6 +130,7 @@ class api extends external_api {
                     'id' => $quiz->id,
                     'name' => external_format_string($quiz->name, $context->id),
                     'courseid' => $quiz->course,
+                    'coursemoduleid' => $quiz->coursemodule,
                     'questions' => [],
                 ];
                 $quizobj = \quiz::create($quiz->id, $USER->id);
@@ -171,6 +172,7 @@ class api extends external_api {
                 'id' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 'name' => new external_value(PARAM_TEXT, 'Quiz Name', VALUE_REQUIRED),
                 'courseid' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
+                'coursemoduleid' =>  new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
                 'questions' => new external_multiple_structure(
                     new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
@@ -222,7 +224,7 @@ class api extends external_api {
                         'id' => $question->id,
                         'name' => external_format_string($question->name, $context->id),
                         'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
-                        'defaultmarks' => $question->defaultmark,
+                        'defaultmarks' => round($question->defaultmark, 2) * 100,
                         'type' => $question->qtype,
                         'quizzes' => [ $quiz->id ],
                     ];
@@ -329,7 +331,7 @@ class api extends external_api {
                     $questionattempt = $quba->get_question_attempt($slot);
                     $ret['questions'][] = [
                         'id' => $questionattempt->get_question_id(),
-                        'mark' => $questionattempt->get_mark(),
+                        'mark' => round($questionattempt->get_mark(), 2),
                         'answer' => external_format_string($questionattempt->get_response_summary(), $context->id),
                     ];
                 }
