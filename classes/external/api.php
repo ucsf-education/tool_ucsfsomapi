@@ -54,10 +54,7 @@ class api extends external_api {
             try {
                 self::validate_context($context);
             } catch (Exception $e) {
-                $exceptionparam = new stdClass();
-                $exceptionparam->message = $e->getMessage();
-                $exceptionparam->courseid = $course->id;
-                throw new moodle_exception('errorcoursecontextnotvalid', 'webservice', '', $exceptionparam);
+                continue;
             }
             if ($course->id != SITEID) {
                 require_capability('moodle/course:view', $context);
@@ -206,10 +203,7 @@ class api extends external_api {
             try {
                 self::validate_context($context);
             } catch (Exception $e) {
-                $exceptionparam = new stdClass();
-                $exceptionparam->message = $e->getMessage();
-                $exceptionparam->courseid = $course->id;
-                throw new moodle_exception('errorcoursecontextnotvalid', 'webservice', '', $exceptionparam);
+                continue;
             }
 
             // load quiz and questions
@@ -292,15 +286,7 @@ class api extends external_api {
             try {
                 self::validate_context($context);
             } catch (Exception $e) {
-                $exceptionparam = new stdClass();
-                $exceptionparam->message = $e->getMessage();
-                $exceptionparam->courseid = $course->id;
-                throw new moodle_exception(
-                    'errorcoursecontextnotvalid',
-                    'webservice',
-                    '',
-                    $exceptionparam
-                );
+                continue;
             }
 
             // load finalized attempts
