@@ -220,6 +220,7 @@ class api extends external_api {
                         'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
+                        'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
                     // bolt on the question ids of all revisions of this question
@@ -266,6 +267,7 @@ class api extends external_api {
                 'revisions' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
                 ),
+                'questionbankentryid' =>  new external_value(PARAM_INT, 'The question bank entry id for this question', VALUE_REQUIRED),
             ]),
         );
     }
