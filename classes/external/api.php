@@ -184,7 +184,7 @@ class api extends external_api {
      * @param array $params
      * @return array
      */
-    public static function get_questions($params = array()) : array {
+    public static function get_questions($params = array()) : array{
         global $DB, $USER, $CFG;
         require_once $CFG->dirroot . '/lib/modinfolib.php';
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
@@ -220,8 +220,15 @@ class api extends external_api {
                         'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
+                        'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
+                    // bolt on the question ids of all revisions of this question
+                    $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
+                    $ids = array_map(function ($version) {
+                        return $version->questionid;
+                    }, $versions);
+                    $rhett[$question->id]['revisions'] = $ids;
                 } else {
                     $rhett[$question->id]['quizzes'][] = $quiz->id;
                 }
@@ -257,6 +264,10 @@ class api extends external_api {
                 'quizzes' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 ),
+                'revisions' => new external_multiple_structure(
+                    new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
+                ),
+                'questionbankentryid' =>  new external_value(PARAM_INT, 'The question bank entry id for this question', VALUE_REQUIRED),
             ]),
         );
     }
@@ -443,6 +454,21 @@ class api extends external_api {
         return $DB->get_records_select(
             'quiz',
             "id ${sql}",
+            $sqlparams,
+            'id'
+        );
+    }
+
+    protected static function get_question_versions_by_questionbankentry($entryid = []): array {
+        global $DB;
+        if (empty($entryid)) {
+            return [];
+        }
+        $entryid = clean_param($entryid, PARAM_INT);
+        list($sql, $sqlparams) = $DB->get_in_or_equal($entryid, SQL_PARAMS_NAMED);
+        return $DB->get_records_select(
+            'question_versions',
+            "questionbankentryid ${sql}",
             $sqlparams,
             'id'
         );
