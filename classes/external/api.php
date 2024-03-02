@@ -12,7 +12,10 @@ defined('MOODLE_INTERNAL') || die();
 
 require_once $CFG->libdir . '/externallib.php';
 
+use coding_exception;
+use context_course;
 use context_module;
+use dml_exception;
 use Exception;
 use core_external\external_api;
 use core_external\external_description;
@@ -22,6 +25,8 @@ use core_external\external_multiple_structure;
 use core_external\external_value;
 use core_external\util;
 use mod_quiz\quiz_attempt;
+use mod_quiz\quiz_settings;
+use question_engine;
 
 
 /**
@@ -50,7 +55,7 @@ class api extends external_api {
         $courses = $DB->get_records_list('course', 'category', $categoryids);
         foreach ($courses as $course) {
             // now security checks
-            $context = \context_course::instance($course->id, IGNORE_MISSING);
+            $context = context_course::instance($course->id, IGNORE_MISSING);
             try {
                 self::validate_context($context);
             } catch (Exception $e) {
@@ -130,7 +135,7 @@ class api extends external_api {
                     'coursemoduleid' => $quiz->coursemodule,
                     'questions' => [],
                 ];
-                $quizobj = \quiz::create($quiz->id, $USER->id);
+                $quizobj = quiz_settings::create($quiz->id, $USER->id);
                 $quizobj->preload_questions();
                 $quizobj->load_questions();
                 $questions = $quizobj->get_questions();
@@ -207,7 +212,7 @@ class api extends external_api {
             }
 
             // load quiz and questions
-            $quizobj = \quiz::create($quiz->id, $USER->id);
+            $quizobj = quiz_settings::create($quiz->id, $USER->id);
             $quizobj->preload_questions();
             $quizobj->load_questions();
             $questions = $quizobj->get_questions();
@@ -322,7 +327,7 @@ class api extends external_api {
                     'questions' => [],
                 ];
 
-                $quba = \question_engine::load_questions_usage_by_activity($quizattempt->uniqueid);
+                $quba = question_engine::load_questions_usage_by_activity($quizattempt->uniqueid);
                 $slots = $quba->get_slots();
                 foreach ($slots as $slot) {
                     $questionattempt = $quba->get_question_attempt($slot);
@@ -441,8 +446,8 @@ class api extends external_api {
     /**
      * @param array $quizids
      * @return array
-     * @throws \coding_exception
-     * @throws \dml_exception
+     * @throws coding_exception
+     * @throws dml_exception
      */
     protected static function get_quizzes_by_ids($quizids = []) : array {
         global $DB;
