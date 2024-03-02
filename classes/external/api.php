@@ -66,7 +66,7 @@ class api extends external_api {
                 $rhett[] = [
                     'id' => $course->id,
                     'categoryid' => $course->category,
-                    'name' => external_format_string($course->fullname, $context->id),
+                    'name' => util::format_string($course->fullname, $context),
                 ];
             }
         }
@@ -124,7 +124,7 @@ class api extends external_api {
             if (has_capability('mod/quiz:viewreports', $context)) {
                 $ret = [
                     'id' => $quiz->id,
-                    'name' => external_format_string($quiz->name, $context->id),
+                    'name' => util::format_string($quiz->name, $context),
                     'courseid' => $quiz->course,
                     'coursemoduleid' => $quiz->coursemodule,
                     'questions' => [],
@@ -215,8 +215,8 @@ class api extends external_api {
                 if (! array_key_exists($question->id, $rhett)) {
                     $rhett[$question->id] = [
                         'id' => $question->id,
-                        'name' => external_format_string($question->name, $context->id),
-                        'text' => external_format_text($question->questiontext, $question->questiontextformat, $context->id)[0],
+                        'name' => util::format_string($question->name, $context),
+                        'text' => util::format_text($question->questiontext, $question->questiontextformat, $context)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
                         'questionbankentryid' => $question->questionbankentryid,
@@ -328,7 +328,7 @@ class api extends external_api {
                     $ret['questions'][] = [
                         'id' => $questionattempt->get_question_id(),
                         'mark' => $questionattempt->get_mark(),
-                        'answer' => external_format_string($questionattempt->get_response_summary(), $context->id),
+                        'answer' => util::format_string($questionattempt->get_response_summary(), $context),
                     ];
                 }
 
