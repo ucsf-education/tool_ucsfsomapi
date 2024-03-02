@@ -21,6 +21,7 @@ use core_external\external_single_structure;
 use core_external\external_multiple_structure;
 use core_external\external_value;
 use core_external\util;
+use mod_quiz\quiz_attempt;
 
 
 /**
@@ -302,8 +303,8 @@ class api extends external_api {
             // load finalized attempts
             // @todo figure out if only finalized attempts should be included. [ST 2021/04/16]
             list($sql, $sqlparams) = $DB->get_in_or_equal($quiz->id, SQL_PARAMS_NAMED);
-            $sqlparams['state1'] = \quiz_attempt::FINISHED;
-            $sqlparams['state2'] = \quiz_attempt::ABANDONED;
+            $sqlparams['state1'] = quiz_attempt::FINISHED;
+            $sqlparams['state2'] = quiz_attempt::ABANDONED;
             $quizattempts = $DB->get_records_select(
                 'quiz_attempts',
                 "quiz ${sql} AND state IN (:state1, :state2)",
