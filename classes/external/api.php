@@ -38,7 +38,7 @@ class api extends external_api {
      * @param array $params
      * @return array
      */
-    public static function get_courses($params = array()) : array {
+    public static function get_courses(?array $params = []) : array {
         global $CFG, $DB;
         require_once($CFG->dirroot . "/course/lib.php");
 
@@ -109,7 +109,7 @@ class api extends external_api {
      * @param array $params
      * @return array
      */
-    public static function get_quizzes($params = array()) : array {
+    public static function get_quizzes(?array $params = []) : array {
         global $USER, $CFG;
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
 
@@ -189,7 +189,7 @@ class api extends external_api {
      * @param array $params
      * @return array
      */
-    public static function get_questions($params = array()) : array{
+    public static function get_questions(?array $params = []) : array{
         global $DB, $USER, $CFG;
         require_once $CFG->dirroot . '/lib/modinfolib.php';
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
@@ -282,7 +282,7 @@ class api extends external_api {
      * @return array
      * @see \mod_quiz_external::get_user_attempts()
      */
-    public static function get_attempts($params = array()) : array {
+    public static function get_attempts(?array $params = []) : array {
         global $DB, $CFG;
         require_once $CFG->dirroot . '/lib/modinfolib.php';
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
@@ -385,7 +385,7 @@ class api extends external_api {
      * @return array
      * @see \core_user_external::get_users()
      */
-    public static function get_users($params = array()) : array {
+    public static function get_users(?array $params = []) : array {
         global $DB;
 
         $rhett = [];
@@ -449,7 +449,7 @@ class api extends external_api {
      * @throws coding_exception
      * @throws dml_exception
      */
-    protected static function get_quizzes_by_ids($quizids = []) : array {
+    protected static function get_quizzes_by_ids(?array $quizids = []) : array {
         global $DB;
         if (empty($quizids)) {
             return [];
@@ -464,9 +464,9 @@ class api extends external_api {
         );
     }
 
-    protected static function get_question_versions_by_questionbankentry($entryid = []): array {
+    protected static function get_question_versions_by_questionbankentry(?string $entryid = ''): array {
         global $DB;
-        if (empty($entryid)) {
+        if (!$entryid) {
             return [];
         }
         $entryid = clean_param($entryid, PARAM_INT);
