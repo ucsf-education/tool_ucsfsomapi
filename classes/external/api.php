@@ -14,15 +14,14 @@ require_once $CFG->libdir . '/externallib.php';
 
 use context_module;
 use Exception;
-use external_api;
-use external_description;
-use external_function_parameters;
-use external_single_structure;
-use external_multiple_structure;
-use external_util;
-use external_value;
-use moodle_exception;
-use stdClass;
+use core_external\external_api;
+use core_external\external_description;
+use core_external\external_function_parameters;
+use core_external\external_single_structure;
+use core_external\external_multiple_structure;
+use core_external\external_value;
+use core_external\util;
+
 
 /**
  * Web Service provider.
@@ -117,7 +116,7 @@ class api extends external_api {
         // We can avoid then additional validate_context calls.
         // @todo figure out what to do with warnings. (probably eat them) [ST 2021/04/14]
         $courseids = clean_param_array($params['courseids'], PARAM_INT);
-        list($courses, $warnings) = external_util::validate_courses($courseids);
+        list($courses, $warnings) = util::validate_courses($courseids);
         $quizzes = get_all_instances_in_courses("quiz", $courses);
 
         foreach ($quizzes as $quiz) {
