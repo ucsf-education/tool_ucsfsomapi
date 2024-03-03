@@ -35,7 +35,7 @@ use question_engine;
 class api extends external_api {
 
     /**
-     * @param array $params
+     * @param ?array $params
      * @return array
      */
     public static function get_courses(?array $params = []) : array {
@@ -106,7 +106,7 @@ class api extends external_api {
     }
 
     /**
-     * @param array $params
+     * @param ?array $params
      * @return array
      */
     public static function get_quizzes(?array $params = []) : array {
@@ -186,7 +186,7 @@ class api extends external_api {
     }
 
     /**
-     * @param array $params
+     * @param ?array $params
      * @return array
      */
     public static function get_questions(?array $params = []) : array{
@@ -278,7 +278,7 @@ class api extends external_api {
     }
 
     /**
-     * @param array $params
+     * @param ?array $params
      * @return array
      * @see \mod_quiz_external::get_user_attempts()
      */
@@ -381,7 +381,7 @@ class api extends external_api {
     }
 
     /**
-     * @param array $params
+     * @param ?array $params
      * @return array
      * @see \core_user_external::get_users()
      */
@@ -444,7 +444,7 @@ class api extends external_api {
     }
 
     /**
-     * @param array $quizids
+     * @param ?array $quizids
      * @return array
      * @throws coding_exception
      * @throws dml_exception
