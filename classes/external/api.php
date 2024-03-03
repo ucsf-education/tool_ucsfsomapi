@@ -312,7 +312,7 @@ class api extends external_api {
             $sqlparams['state2'] = quiz_attempt::ABANDONED;
             $quizattempts = $DB->get_records_select(
                 'quiz_attempts',
-                "quiz ${sql} AND state IN (:state1, :state2)",
+                "quiz {$sql} AND state IN (:state1, :state2)",
                 $sqlparams,
                 'quiz'
             );
@@ -403,7 +403,7 @@ class api extends external_api {
         // @todo Should we include deleted user accounts here? [ST 2021/04/26]
         $users = $DB->get_records_select(
             'user',
-            "id ${sql} AND deleted = 0",
+            "id {$sql} AND deleted = 0",
             $sqlparams,
             'id'
         );
@@ -458,7 +458,7 @@ class api extends external_api {
         list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
         return $DB->get_records_select(
             'quiz',
-            "id ${sql}",
+            "id {$sql}",
             $sqlparams,
             'id'
         );
@@ -473,7 +473,7 @@ class api extends external_api {
         list($sql, $sqlparams) = $DB->get_in_or_equal($entryid, SQL_PARAMS_NAMED);
         return $DB->get_records_select(
             'question_versions',
-            "questionbankentryid ${sql}",
+            "questionbankentryid {$sql}",
             $sqlparams,
             'id'
         );
