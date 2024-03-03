@@ -24,9 +24,12 @@ use core_external\external_single_structure;
 use core_external\external_multiple_structure;
 use core_external\external_value;
 use core_external\util;
+use invalid_parameter_exception;
 use mod_quiz\quiz_attempt;
 use mod_quiz\quiz_settings;
+use moodle_exception;
 use question_engine;
+use required_capability_exception;
 
 
 /**
@@ -37,6 +40,10 @@ class api extends external_api {
     /**
      * @param ?array $params
      * @return array
+     * @throws invalid_parameter_exception
+     * @throws required_capability_exception
+     * @throws coding_exception
+     * @throws dml_exception
      */
     public static function get_courses(?array $params = []) : array {
         global $CFG, $DB;
@@ -108,6 +115,9 @@ class api extends external_api {
     /**
      * @param ?array $params
      * @return array
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     * @throws coding_exception
      */
     public static function get_quizzes(?array $params = []) : array {
         global $USER, $CFG;
@@ -188,6 +198,10 @@ class api extends external_api {
     /**
      * @param ?array $params
      * @return array
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     * @throws coding_exception
+     * @throws dml_exception
      */
     public static function get_questions(?array $params = []) : array{
         global $DB, $USER, $CFG;
@@ -280,6 +294,10 @@ class api extends external_api {
     /**
      * @param ?array $params
      * @return array
+     * @throws invalid_parameter_exception
+     * @throws moodle_exception
+     * @throws coding_exception
+     * @throws dml_exception
      * @see \mod_quiz_external::get_user_attempts()
      */
     public static function get_attempts(?array $params = []) : array {
@@ -383,6 +401,9 @@ class api extends external_api {
     /**
      * @param ?array $params
      * @return array
+     * @throws invalid_parameter_exception
+     * @throws coding_exception
+     * @throws dml_exception
      * @see \core_user_external::get_users()
      */
     public static function get_users(?array $params = []) : array {
@@ -464,6 +485,10 @@ class api extends external_api {
         );
     }
 
+    /**
+     * @throws coding_exception
+     * @throws dml_exception
+     */
     protected static function get_question_versions_by_questionbankentry(?string $entryid = ''): array {
         global $DB;
         if (!$entryid) {
