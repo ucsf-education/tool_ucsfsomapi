@@ -65,7 +65,7 @@ class api extends external_api {
             $context = context_course::instance($course->id, IGNORE_MISSING);
             try {
                 self::validate_context($context);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 continue;
             }
             if ($course->id != SITEID) {
@@ -204,7 +204,7 @@ class api extends external_api {
      * @throws dml_exception
      */
     public static function get_questions(?array $params = []) : array{
-        global $DB, $USER, $CFG;
+        global $USER, $CFG;
         require_once $CFG->dirroot . '/lib/modinfolib.php';
         require_once $CFG->dirroot . '/mod/quiz/locallib.php';
 
@@ -221,7 +221,7 @@ class api extends external_api {
             $context = context_module::instance($cm->id);
             try {
                 self::validate_context($context);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 continue;
             }
 
@@ -319,7 +319,7 @@ class api extends external_api {
             $context = context_module::instance($cm->id);
             try {
                 self::validate_context($context);
-            } catch (Exception $e) {
+            } catch (Exception) {
                 continue;
             }
 
