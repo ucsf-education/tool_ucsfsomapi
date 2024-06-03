@@ -1,16 +1,32 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Web Service functions for tool_ucsfsomapi.
+ * Web service functions for the tool_ucsfsomapi plugin.
  *
- * @package tool_ucsfsomapi
+ * @package    tool_ucsfsomapi
+ * @copyright  The Regents of the University of California
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
 namespace tool_ucsfsomapi\external;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once $CFG->libdir . '/externallib.php';
+require_once($CFG->libdir . '/externallib.php');
 
 use coding_exception;
 use context_course;
@@ -31,23 +47,29 @@ use moodle_exception;
 use question_engine;
 use required_capability_exception;
 
-
 /**
- * Web Service provider.
+ * Web Service provider class.
+ *
+ * @package    tool_ucsfsomapi
+ * @copyright  The Regents of the University of California
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class api extends external_api {
-
     /**
-     * @param ?array $params
-     * @return array
+     * Implements the tool_ucsfsomapi_get_courses web service endpoint.
+     * Returns a list of course data for a given list of course IDs.
+     * Each data point includes the course name, course ID, and course category ID.
+     *
+     * @param ?array $params Input parameters, contains the list of course IDs.
+     * @return array A list of course data points.
      * @throws invalid_parameter_exception
      * @throws required_capability_exception
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function get_courses(?array $params = []) : array {
+    public static function get_courses(?array $params = []): array {
         global $CFG, $DB;
-        require_once($CFG->dirroot . "/course/lib.php");
+        require_once($CFG->dirroot . '/course/lib.php');
 
         $rhett = [];
 
@@ -61,7 +83,7 @@ class api extends external_api {
         $categoryids = clean_param_array($params['categoryids'], PARAM_INT);
         $courses = $DB->get_records_list('course', 'category', $categoryids);
         foreach ($courses as $course) {
-            // now security checks
+            // Now security checks.
             $context = context_course::instance($course->id, IGNORE_MISSING);
             try {
                 self::validate_context($context);
@@ -74,8 +96,8 @@ class api extends external_api {
 
             $courseadmin = has_capability('moodle/course:update', $context);
 
-            if ($courseadmin or $course->visible
-                or has_capability('moodle/course:viewhiddencourses', $context)) {
+            if ($courseadmin || $course->visible
+                || has_capability('moodle/course:viewhiddencourses', $context)) {
                 $rhett[] = [
                     'id' => $course->id,
                     'categoryid' => $course->category,
@@ -88,9 +110,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_function_parameters
+     * Defines the input parameters for the tool_ucsfsomapi_get_courses web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
      */
-    public static function get_courses_parameters() : external_function_parameters {
+    public static function get_courses_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['categoryids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Category ID')
@@ -100,9 +124,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_description
+     * Defines the output structure for the tool_ucsfsomapi_get_courses web service endpoint.
+     *
+     * @return external_description The output structure definition.
      */
-    public static function get_courses_returns() : external_description {
+    public static function get_courses_returns(): external_description {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
@@ -113,15 +139,20 @@ class api extends external_api {
     }
 
     /**
-     * @param ?array $params
-     * @return array
+     * Implements the tool_ucsfsomapi_get_quizzes web service endpoint.
+     * Returns a list of quiz data for a given list of course IDs.
+     * Each data point includes the quiz ID, course name, course ID, course module ID,
+     * and a list of question IDs and max marks for all questions belonging to each quiz.
+     *
+     * @param ?array $params Input parameters, contains the list of course IDs.
+     * @return array A list of quiz data points.
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      * @throws coding_exception
      */
-    public static function get_quizzes(?array $params = []) : array {
+    public static function get_quizzes(?array $params = []): array {
         global $USER, $CFG;
-        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
         $rhett = [];
 
@@ -130,7 +161,7 @@ class api extends external_api {
 
         // Get the quizzes in this course, this function checks users visibility permissions.
         // We can avoid then additional validate_context calls.
-        // @todo figure out what to do with warnings. (probably eat them) [ST 2021/04/14]
+        // Todo: figure out what to do with warnings. (probably eat them) [ST 2021/04/14].
         $courseids = clean_param_array($params['courseids'], PARAM_INT);
         list($courses, $warnings) = util::validate_courses($courseids);
         $quizzes = get_all_instances_in_courses("quiz", $courses);
@@ -163,9 +194,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_function_parameters
+     * Defines the input parameters for the tool_ucsfsomapi_get_quizzes web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
      */
-    public static function get_quizzes_parameters() : external_function_parameters {
+    public static function get_quizzes_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['courseids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Course ID')
@@ -176,15 +209,17 @@ class api extends external_api {
     }
 
     /**
-     * @return external_description
+     * Defines the output structure for the tool_ucsfsomapi_get_quizzes web service endpoint.
+     *
+     * @return external_description The output structure definition.
      */
-    public static function get_quizzes_returns() : external_description {
+    public static function get_quizzes_returns(): external_description {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
                 'name' => new external_value(PARAM_TEXT, 'Quiz Name', VALUE_REQUIRED),
                 'courseid' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
-                'coursemoduleid' =>  new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
+                'coursemoduleid' => new external_value(PARAM_INT, 'Course ID', VALUE_REQUIRED),
                 'questions' => new external_multiple_structure(
                     new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
@@ -196,17 +231,22 @@ class api extends external_api {
     }
 
     /**
-     * @param ?array $params
-     * @return array
+     * Implements the tool_ucsfsomapi_get_questions web service endpoint.
+     * Returns a list of question data for a given list of quiz IDs.
+     * Each data point includes the question ID, question name, question text, question default marks, question type,
+     * question bank entry ID, a list of associated quiz IDs, and a list of question revisions.
+     *
+     * @param ?array $params Input parameters, contains the list of quiz IDs.
+     * @return array A list of question data points.
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      * @throws coding_exception
      * @throws dml_exception
      */
-    public static function get_questions(?array $params = []) : array{
+    public static function get_questions(?array $params = []): array {
         global $USER, $CFG;
-        require_once $CFG->dirroot . '/lib/modinfolib.php';
-        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
+        require_once($CFG->dirroot . '/lib/modinfolib.php');
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
         $rhett = [];
 
@@ -215,8 +255,8 @@ class api extends external_api {
 
         $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
-        foreach($quizzes as $quiz) {
-            /* @see \mod_quiz_external::validate_quiz() */
+        foreach ($quizzes as $quiz) {
+            // See mod_quiz_external::validate_quiz.
             list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
             try {
@@ -225,7 +265,7 @@ class api extends external_api {
                 continue;
             }
 
-            // load quiz and questions
+            // Load quiz and questions.
             $quizobj = quiz_settings::create($quiz->id, $USER->id);
             $quizobj->preload_questions();
             $quizobj->load_questions();
@@ -242,7 +282,7 @@ class api extends external_api {
                         'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
-                    // bolt on the question ids of all revisions of this question
+                    // Bolt on the question ids of all revisions of this question.
                     $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
                     $ids = array_map(function ($version) {
                         return $version->questionid;
@@ -257,9 +297,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_function_parameters
+     * Defines the input parameters for the tool_ucsfsomapi_get_questions web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
      */
-    public static function get_questions_parameters() : external_function_parameters {
+    public static function get_questions_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Quiz ID')
@@ -270,9 +312,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_description
+     * Defines the output structure for the tool_ucsfsomapi_get_questions web service endpoint.
+     *
+     * @return external_description The output structure definition.
      */
-    public static function get_questions_returns() : external_description {
+    public static function get_questions_returns(): external_description {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
@@ -286,24 +330,33 @@ class api extends external_api {
                 'revisions' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
                 ),
-                'questionbankentryid' =>  new external_value(PARAM_INT, 'The question bank entry id for this question', VALUE_REQUIRED),
+                'questionbankentryid' => new external_value(
+                    PARAM_INT,
+                    'The question bank entry id for this question',
+                    VALUE_REQUIRED
+                ),
             ]),
         );
     }
 
     /**
-     * @param ?array $params
-     * @return array
+     * Implements the tool_ucsfsomapi_get_attempts web service endpoint.
+     * Returns a list of quiz-attempt data for a given list of quiz IDs.
+     * Each data point includes the attempt ID, attempt start time, attempt finish time, the attempt's quiz ID,
+     * the attempt taker's user ID, and a list of given answers per attempt.
+
+     * @param ?array $params Input parameters, contains the list of quiz IDs.
+     * @return array A list of quiz-attempt data points.
      * @throws invalid_parameter_exception
      * @throws moodle_exception
      * @throws coding_exception
      * @throws dml_exception
      * @see \mod_quiz_external::get_user_attempts()
      */
-    public static function get_attempts(?array $params = []) : array {
+    public static function get_attempts(?array $params = []): array {
         global $DB, $CFG;
-        require_once $CFG->dirroot . '/lib/modinfolib.php';
-        require_once $CFG->dirroot . '/mod/quiz/locallib.php';
+        require_once($CFG->dirroot . '/lib/modinfolib.php');
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
         $rhett = [];
 
@@ -312,9 +365,9 @@ class api extends external_api {
 
         $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
-        foreach($quizzes as $quiz) {
-            // validate against the quiz-owning course context.
-            /* @see \mod_quiz_external::validate_quiz() */
+        foreach ($quizzes as $quiz) {
+            // Validate against the quiz-owning course context.
+            // See \mod_quiz_external::validate_quiz.
             list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
             try {
@@ -323,8 +376,8 @@ class api extends external_api {
                 continue;
             }
 
-            // load finalized attempts
-            // @todo figure out if only finalized attempts should be included. [ST 2021/04/16]
+            // Load finalized attempts.
+            // Todo: figure out if only finalized attempts should be included [ST 2021/04/16].
             list($sql, $sqlparams) = $DB->get_in_or_equal($quiz->id, SQL_PARAMS_NAMED);
             $sqlparams['state1'] = quiz_attempt::FINISHED;
             $sqlparams['state2'] = quiz_attempt::ABANDONED;
@@ -338,8 +391,8 @@ class api extends external_api {
             foreach ($quizattempts as $quizattempt) {
                 $ret = [
                     'id' => $quizattempt->id,
-                    'timestart' => $quizattempt->timestart, // @todo convert to datetime string? [ST 2021/04/16]
-                    'timefinish' => $quizattempt->timefinish, // @todo convert to datetime string? [ST 2021/04/16]
+                    'timestart' => $quizattempt->timestart,
+                    'timefinish' => $quizattempt->timefinish,
                     'quizid' => $quizattempt->quiz,
                     'userid' => $quizattempt->userid,
                     'questions' => [],
@@ -364,9 +417,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_function_parameters
+     * Defines the input parameters for the tool_ucsfsomapi_get_attempts web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
      */
-    public static function get_attempts_parameters() : external_function_parameters {
+    public static function get_attempts_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Quiz ID')
@@ -377,9 +432,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_description
+     * Defines the output structure for the tool_ucsfsomapi_get_attempts web service endpoint.
+     *
+     * @return external_description The output structure definition.
      */
-    public static function get_attempts_returns() : external_description {
+    public static function get_attempts_returns(): external_description {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'Attempt ID', VALUE_REQUIRED),
@@ -399,14 +456,18 @@ class api extends external_api {
     }
 
     /**
-     * @param ?array $params
-     * @return array
+     * Implements the tool_ucsfsomapi_get_users web service endpoint.
+     * Returns a list of user data for a given list of user IDs.
+     * Each data point includes the user ID and the user's UC ID.
+     *
+     * @param ?array $params Input parameters, contains the list of user IDs.
+     * @return array A list of user data points.
      * @throws invalid_parameter_exception
      * @throws coding_exception
      * @throws dml_exception
      * @see \core_user_external::get_users()
      */
-    public static function get_users(?array $params = []) : array {
+    public static function get_users(?array $params = []): array {
         global $DB;
 
         $rhett = [];
@@ -421,7 +482,6 @@ class api extends external_api {
         $userids = clean_param_array($params['userids'], PARAM_INT);
 
         list($sql, $sqlparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
-        // @todo Should we include deleted user accounts here? [ST 2021/04/26]
         $users = $DB->get_records_select(
             'user',
             "id $sql AND deleted = 0",
@@ -440,9 +500,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_function_parameters
+     * Defines the input parameters for the tool_ucsfsomapi_get_users web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
      */
-    public static function get_users_parameters() : external_function_parameters {
+    public static function get_users_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['userids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'User ID')
@@ -453,9 +515,11 @@ class api extends external_api {
     }
 
     /**
-     * @return external_description
+     * Defines the output structure for the tool_ucsfsomapi_get_users web service endpoint.
+     *
+     * @return external_description The output structure definition.
      */
-    public static function get_users_returns() : external_description {
+    public static function get_users_returns(): external_description {
         return new external_multiple_structure(
             new external_single_structure([
                 'id' => new external_value(PARAM_INT, 'User ID', VALUE_REQUIRED),
@@ -465,12 +529,14 @@ class api extends external_api {
     }
 
     /**
-     * @param ?array $quizids
-     * @return array
+     * Retrieves a list of quiz records by their IDs.
+     *
+     * @param ?array $quizids The quiz IDs.
+     * @return array A list of quiz records.
      * @throws coding_exception
      * @throws dml_exception
      */
-    protected static function get_quizzes_by_ids(?array $quizids = []) : array {
+    protected static function get_quizzes_by_ids(?array $quizids = []): array {
         global $DB;
         if (empty($quizids)) {
             return [];
@@ -486,6 +552,10 @@ class api extends external_api {
     }
 
     /**
+     * Get a list of question versions by the question's question bank entry.
+     *
+     * @param ?string $entryid The question bank entry ID.
+     * @return array A list of question records.
      * @throws coding_exception
      * @throws dml_exception
      */

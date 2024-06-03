@@ -1,13 +1,28 @@
 <?php
+// This file is part of Moodle - http://moodle.org/
+//
+// Moodle is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// Moodle is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * List of Web Services for the tool_ucsfsomapi plugin.
+ * Web service declarations for the tool_ucsfsomapi plugin.
  *
- * @package tool_ucsfsomapi
+ * @package    tool_ucsfsomapi
+ * @copyright  The Regents of the University of California
+ * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-defined('MOODLE_INTERNAL') || die();
 
-const UCSF_SOM_API_SERVICE = 'ucsf_som_api';
+defined('MOODLE_INTERNAL') || die();
 
 $functions = [
     'tool_ucsfsomapi_get_courses' => [
@@ -17,7 +32,7 @@ $functions = [
         'type' => 'read',
         'capabilities' => 'moodle/course:view',
         'ajax' => false,
-        'services' => [UCSF_SOM_API_SERVICE],
+        'services' => ['ucsf_som_api'],
     ],
     'tool_ucsfsomapi_get_quizzes' => [
         'classname' => 'tool_ucsfsomapi\external\api',
@@ -26,7 +41,7 @@ $functions = [
         'type' => 'read',
         'capabilities' => 'mod/quiz:viewreports',
         'ajax' => false,
-        'services' => [UCSF_SOM_API_SERVICE],
+        'services' => ['ucsf_som_api'],
     ],
     'tool_ucsfsomapi_get_questions' => [
         'classname' => 'tool_ucsfsomapi\external\api',
@@ -35,7 +50,7 @@ $functions = [
         'type' => 'read',
         'capabilities' => 'moodle/question:viewall',
         'ajax' => false,
-        'services' => [UCSF_SOM_API_SERVICE],
+        'services' => ['ucsf_som_api'],
     ],
     'tool_ucsfsomapi_get_attempts' => [
         'classname' => 'tool_ucsfsomapi\external\api',
@@ -44,17 +59,17 @@ $functions = [
         'type' => 'read',
         'capabilities' => 'mod/quiz:viewreports',
         'ajax' => false,
-        'services' => [UCSF_SOM_API_SERVICE],
+        'services' => ['ucsf_som_api'],
     ],
-    'tool_ucsfsomapi_get_users' => array(
+    'tool_ucsfsomapi_get_users' => [
         'classname' => 'tool_ucsfsomapi\external\api',
         'methodname' => 'get_users',
         'description' => 'Gets UC ids for given users.',
         'type' => 'read',
         'capabilities' => 'moodle/user:viewdetails',
         'ajax' => false,
-        'services' => [UCSF_SOM_API_SERVICE],
-    ),
+        'services' => ['ucsf_som_api'],
+    ],
 ];
 
 $services = [
@@ -62,6 +77,6 @@ $services = [
         'functions' => [],
         'enabled' => 0,
         'restrictedusers' => 1,
-        'shortname' => UCSF_SOM_API_SERVICE,
+        'shortname' => 'ucsf_som_api',
     ],
 ];
