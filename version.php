@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
-$plugin->version   = 2024061000;        // The current plugin version (Date: YYYYMMDDXX).
-$plugin->requires  = 2023100400;        // Requires this Moodle version.
-$plugin->component = 'tool_ucsfsomapi';      // Full name of the plugin (used for diagnostics).
+$plugin->component = 'tool_ucsfsomapi';
+$plugin->version   = 2024092700;
+$plugin->requires  = 2024041600;
+$plugin->supported = [404, 404];
+$plugin->maturity  = MATURITY_STABLE;
