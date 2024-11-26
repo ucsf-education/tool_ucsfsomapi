@@ -350,7 +350,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertTrue($componentvalue instanceof external_multiple_structure);
 
         $innercomponent = $componentvalue->content;
-         $this->assertTrue( $innercomponent instanceof external_value);
+        $this->assertTrue( $innercomponent instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $innercomponent->required);
         $this->assertEquals('Question ID', $innercomponent->desc);
         $this->assertEquals(PARAM_INT, $innercomponent->type);
@@ -620,7 +620,7 @@ final class api_test extends externallib_advanced_testcase {
         // Simulate a quiz attempt with the given student and answers.
         // @see /mod/quiz/tests/external/external_test.php for reference.
         $attemptquiz = function(object $student, array $responses, int $timestart, int $timefinish)
-            use ($quiz, $studentrole, $questiongenerator): quiz_attempt {
+        use ($quiz, $studentrole, $questiongenerator): quiz_attempt {
             // Create a new quiz attempt.
             $quizsettings = quiz_settings::create($quiz->id, $student->id);
             $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizsettings->get_context());
