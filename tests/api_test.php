@@ -305,7 +305,7 @@ final class api_test extends externallib_advanced_testcase {
 
         $innerstructure = $structure->content;
         $this->assertTrue($innerstructure instanceof external_single_structure);
-        $this->assertCount(8, $innerstructure->keys);
+        $this->assertCount(9, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
         $this->assertTrue( $componentvalue instanceof external_value);
@@ -323,6 +323,12 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertTrue( $componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question text', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
+
+        $componentvalue = $innerstructure->keys['generalfeedback'];
+        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('General feedback for this question', $componentvalue->desc);
         $this->assertEquals(PARAM_RAW, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['type'];
@@ -397,10 +403,15 @@ final class api_test extends externallib_advanced_testcase {
         $category = $questiongenerator->create_question_category();
         $maxmark1 = 2.0;
         $maxmark2 = 0.67;
+        $generalfeedback1 = '<p>Lorem Ipsum.</p>';
         $question1 = $questiongenerator->create_question(
             'truefalse',
             null,
-            ['name' => 'Yes or no', 'category' => $category->id]
+            [
+                'name' => 'Yes or no',
+                'category' => $category->id,
+                'generalfeedback' => ['text' => $generalfeedback1, 'format' => FORMAT_HTML],
+            ]
         );
         // Add this question to quizzes 1 and 2.
         quiz_add_quiz_question($question1->id, $quiz1, maxmark: $maxmark1);
@@ -415,14 +426,21 @@ final class api_test extends externallib_advanced_testcase {
         $question3 = $questiongenerator->create_question(
             'multichoice',
             null,
-            ['name' => 'Yes, no, or maybe', 'category' => $category->id]
+            ['name' => 'Yes, no, or maybe', 'category' => $category->id],
         );
         // Add this question to quizzes 2 and 3.
         quiz_add_quiz_question($question3->id, $quiz2);
         quiz_add_quiz_question($question3->id, $quiz3);
 
         // Update the third question.
-        $question3 = $questiongenerator->update_question($question3, null, ['name' => 'A new name']);
+        $question3 = $questiongenerator->update_question(
+                $question3,
+                null,
+                [
+                    'name' => 'A new name',
+                    'generalfeedback' => ['text' => '   ', 'format' => FORMAT_MOODLE],
+                ]
+        );
 
         // Get a handle on all versions of these questions.
         $question1versions = question_bank::get_all_versions_of_question($question1->id);
@@ -454,6 +472,8 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question1->defaultmark, $rhett[0]['defaultmarks']);
         $this->assertEquals($question1->qtype, $rhett[0]['type']);
+        $this->assertEquals($generalfeedback1, $rhett[0]['generalfeedback']);
+
         $this->assertEquals($question1->questionbankentryid, $rhett[0]['questionbankentryid']);
         $this->assertEquals([$quiz1->id, $quiz2->id], $rhett[0]['quizzes']);
         $this->assertCount(1, $rhett[0]['revisions']);
@@ -467,6 +487,7 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question2->defaultmark, $rhett[1]['defaultmarks']);
         $this->assertEquals($question2->qtype, $rhett[1]['type']);
+        $this->assertEquals('Generalfeedback: 3.14 is the right answer.', $rhett[1]['generalfeedback']);
         $this->assertEquals($question2->questionbankentryid, $rhett[1]['questionbankentryid']);
         $this->assertEquals([$quiz2->id], $rhett[1]['quizzes']);
         $this->assertCount(1, $rhett[1]['revisions']);
@@ -480,6 +501,7 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question3->defaultmark, $rhett[2]['defaultmarks']);
         $this->assertEquals($question3->qtype, $rhett[2]['type']);
+        $this->assertEquals('', $rhett[2]['generalfeedback']);
         $this->assertEquals($question3->questionbankentryid, $rhett[2]['questionbankentryid']);
         $this->assertEquals([$quiz2->id, $quiz3->id], $rhett[2]['quizzes']);
         $this->assertCount(2, $rhett[2]['revisions']);
