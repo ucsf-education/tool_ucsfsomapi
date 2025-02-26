@@ -275,6 +275,11 @@ class api extends external_api {
                         'text' => util::format_text($question->questiontext, $question->questiontextformat, $context)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
+                        'generalfeedback' => util::format_text(
+                            $question->generalfeedback,
+                            $question->generalfeedbackformat,
+                            $context
+                        )[0],
                         'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
@@ -319,6 +324,7 @@ class api extends external_api {
                 'name' => new external_value(PARAM_TEXT, 'Question name', VALUE_REQUIRED),
                 'text' => new external_value(PARAM_RAW, 'Question text', VALUE_REQUIRED),
                 'type' => new external_value(PARAM_TEXT, 'Question type', VALUE_REQUIRED),
+                'generalfeedback' => new external_value(PARAM_RAW, 'General feedback for this question', VALUE_REQUIRED),
                 'defaultmarks' => new external_value(PARAM_FLOAT, 'Default marks for this question.', VALUE_REQUIRED),
                 'quizzes' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
@@ -422,7 +428,7 @@ class api extends external_api {
             ['quizids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Quiz ID')
                 , 'List of quiz IDs.',
-                VALUE_REQUIRED
+                VALUE_REQUIRED,
             )]
         );
     }
