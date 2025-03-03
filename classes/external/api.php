@@ -24,10 +24,6 @@
 
 namespace tool_ucsfsomapi\external;
 
-defined('MOODLE_INTERNAL') || die();
-
-require_once($CFG->libdir . '/externallib.php');
-
 use coding_exception;
 use context_course;
 use context_module;
