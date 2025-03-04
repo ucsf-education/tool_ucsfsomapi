@@ -42,6 +42,7 @@ use mod_quiz\quiz_settings;
 use moodle_exception;
 use question_engine;
 use required_capability_exception;
+use stdClass;
 
 /**
  * Web Service provider class.
@@ -283,6 +284,12 @@ class api extends external_api {
                         'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
+                    // Question-type specific additional data points.
+                    // Grader info for Essay questions.
+                    if ('essay' === $rhett[$question->id]['type']) {
+                        $rhett[$question->id]['extra']['graderinfo'] = util::format_text(
+                            $question->options->graderinfo, $question->options->graderinfoformat, $context)[0];
+                    }
                     // Bolt on the question ids of all revisions of this question.
                     $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
                     $ids = array_map(function ($version) {
@@ -336,6 +343,17 @@ class api extends external_api {
                     PARAM_INT,
                     'The question bank entry id for this question',
                     VALUE_REQUIRED
+                ),
+                'extra' => new external_single_structure(
+                    [
+                        'graderinfo' => new external_value(
+                            PARAM_RAW,
+                            'Information for graders on Essay questions',
+                            VALUE_REQUIRED
+                        ),
+                    ],
+                    desc: 'Additional data points that are question-type specific.',
+                    required: false,
                 ),
             ]),
         );
