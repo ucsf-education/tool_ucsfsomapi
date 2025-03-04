@@ -113,8 +113,8 @@ class api extends external_api {
     public static function get_courses_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['categoryids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Category ID')
-                , 'List of category IDs.',
+                new external_value(PARAM_INT, 'Category ID'),
+                'List of category IDs.',
                 VALUE_REQUIRED
             )]);
     }
@@ -197,8 +197,8 @@ class api extends external_api {
     public static function get_quizzes_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['courseids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Course ID')
-                , 'List of course IDs.',
+                new external_value(PARAM_INT, 'Course ID'),
+                'List of course IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -305,8 +305,8 @@ class api extends external_api {
     public static function get_questions_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Quiz ID')
-                , 'List of quiz IDs.',
+                new external_value(PARAM_INT, 'Quiz ID'),
+                'List of quiz IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -426,8 +426,8 @@ class api extends external_api {
     public static function get_attempts_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Quiz ID')
-                , 'List of quiz IDs.',
+                new external_value(PARAM_INT, 'Quiz ID'),
+                'List of quiz IDs.',
                 VALUE_REQUIRED,
             )]
         );
@@ -509,8 +509,8 @@ class api extends external_api {
     public static function get_users_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['userids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'User ID')
-                , 'List of user IDs.',
+                new external_value(PARAM_INT, 'User ID'),
+                'List of user IDs.',
                 VALUE_REQUIRED
             )]
         );
