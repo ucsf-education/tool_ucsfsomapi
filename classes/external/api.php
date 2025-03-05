@@ -283,6 +283,12 @@ class api extends external_api {
                         'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
+                    // Question-type specific additional data points.
+                    // Grader info for Essay questions.
+                    if ('essay' === $rhett[$question->id]['type']) {
+                        $rhett[$question->id]['options']['graderinfo'] = util::format_text(
+                            $question->options->graderinfo, $question->options->graderinfoformat, $context)[0];
+                    }
                     // Bolt on the question ids of all revisions of this question.
                     $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
                     $ids = array_map(function ($version) {
@@ -336,6 +342,17 @@ class api extends external_api {
                     PARAM_INT,
                     'The question bank entry id for this question',
                     VALUE_REQUIRED
+                ),
+                'options' => new external_single_structure(
+                    [
+                        'graderinfo' => new external_value(
+                            PARAM_RAW,
+                            'Information for graders on Essay questions',
+                            VALUE_REQUIRED
+                        ),
+                    ],
+                    'Additional data points that are question-type specific',
+                    VALUE_OPTIONAL,
                 ),
             ]),
         );
