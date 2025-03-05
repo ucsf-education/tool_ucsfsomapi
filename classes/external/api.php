@@ -289,6 +289,18 @@ class api extends external_api {
                         $rhett[$question->id]['options']['graderinfo'] = util::format_text(
                             $question->options->graderinfo, $question->options->graderinfoformat, $context)[0];
                     }
+                    // Add question answers, if there are any.
+                    if (property_exists($question, 'options')
+                        && property_exists($question->options, 'answers')
+                        && $question->options->answers) {
+                        foreach ($question->options->answers as $answer) {
+                            $rhett[$question->id]['options']['answers'][] = [
+                                'text' => util::format_text($answer->answer, $answer->answerformat, $context)[0],
+                                'grade' => $answer->fraction,
+                            ];
+                        }
+                    }
+
                     // Bolt on the question ids of all revisions of this question.
                     $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
                     $ids = array_map(function ($version) {
@@ -348,7 +360,23 @@ class api extends external_api {
                         'graderinfo' => new external_value(
                             PARAM_RAW,
                             'Information for graders on Essay questions',
-                            VALUE_REQUIRED
+                            VALUE_OPTIONAL
+                        ),
+                        'answers' => new external_multiple_structure(
+                            new external_single_structure(
+                                [
+                                    'text' => new external_value(PARAM_RAW, 'The text of the answer', VALUE_REQUIRED),
+                                    'grade' => new external_value(
+                                        PARAM_FLOAT,
+                                        'The fractional grade of the answer',
+                                        VALUE_REQUIRED
+                                    ),
+                                ],
+                                'An answer to the question',
+                                VALUE_OPTIONAL
+                            ),
+                            'Question answers',
+                            VALUE_OPTIONAL
                         ),
                     ],
                     'Additional data points that are question-type specific',
