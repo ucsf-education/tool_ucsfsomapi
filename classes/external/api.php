@@ -269,14 +269,32 @@ class api extends external_api {
 
             foreach ($questions as $question) {
                 if (! array_key_exists($question->id, $rhett)) {
+                    $textwithlinks = question_rewrite_question_urls(
+                        $question->questiontext,
+                        'webservice/pluginfile.php',
+                        $question->contextid,
+                        'question',
+                        'questiontext',
+                        ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                        $question->id
+                    );
+                    $generalfeedbackwithlinks = question_rewrite_question_urls(
+                        $question->generalfeedback,
+                        'webservice/pluginfile.php',
+                        $question->contextid,
+                        'question',
+                        'generalfeedback',
+                        ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                        $question->id
+                    );
                     $rhett[$question->id] = [
                         'id' => $question->id,
                         'name' => util::format_string($question->name, $context),
-                        'text' => util::format_text($question->questiontext, $question->questiontextformat, $context)[0],
+                        'text' => util::format_text($textwithlinks, $question->questiontextformat, $context)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
                         'generalfeedback' => util::format_text(
-                            $question->generalfeedback,
+                            $generalfeedbackwithlinks,
                             $question->generalfeedbackformat,
                             $context
                         )[0],
@@ -286,16 +304,34 @@ class api extends external_api {
                     // Question-type specific additional data points.
                     // Grader info for Essay questions.
                     if ('essay' === $rhett[$question->id]['type']) {
+                        $graderinfowithlinks = question_rewrite_question_urls(
+                            $question->options->graderinfo,
+                            'webservice/pluginfile.php',
+                            $question->contextid,
+                            'qtype_essay',
+                            'graderinfo',
+                            ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                            $question->id
+                        );
                         $rhett[$question->id]['options']['graderinfo'] = util::format_text(
-                            $question->options->graderinfo, $question->options->graderinfoformat, $context)[0];
+                            $graderinfowithlinks, $question->options->graderinfoformat, $context)[0];
                     }
                     // Add question answers, if there are any.
                     if (property_exists($question, 'options')
                         && property_exists($question->options, 'answers')
                         && $question->options->answers) {
                         foreach ($question->options->answers as $answer) {
+                            $answerwithfilelinks = question_rewrite_question_urls(
+                                $answer->answer,
+                                'webservice/pluginfile.php',
+                                $question->contextid,
+                                'question',
+                                'answer',
+                                ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                                $answer->id
+                            );
                             $rhett[$question->id]['options']['answers'][] = [
-                                'text' => util::format_text($answer->answer, $answer->answerformat, $context)[0],
+                                'text' => util::format_text($answerwithfilelinks, $answer->answerformat, $context)[0],
                                 'grade' => $answer->fraction,
                             ];
                         }
