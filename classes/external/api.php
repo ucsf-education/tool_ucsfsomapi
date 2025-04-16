@@ -330,9 +330,19 @@ class api extends external_api {
                                 ['preview', $question->contextid, 'tool_ucsfsomapi'],
                                 $answer->id
                             );
+                            $feedbackwithfilelinks = question_rewrite_question_urls(
+                                $answer->feedback,
+                                'webservice/pluginfile.php',
+                                $question->contextid,
+                                'question',
+                                'answerfeedback',
+                                ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                                $answer->id
+                            );
                             $rhett[$question->id]['options']['answers'][] = [
                                 'text' => util::format_text($answerwithfilelinks, $answer->answerformat, $context)[0],
                                 'grade' => $answer->fraction,
+                                'feedback' => util::format_text($feedbackwithfilelinks, $answer->feedbackformat, $context)[0],
                             ];
                         }
                     }
@@ -407,6 +417,7 @@ class api extends external_api {
                                         'The fractional grade of the answer',
                                         VALUE_REQUIRED
                                     ),
+                                    'feedback' => new external_value(PARAM_RAW, 'The feedback to the answer', VALUE_REQUIRED),
                                 ],
                                 'An answer to the question',
                                 VALUE_OPTIONAL

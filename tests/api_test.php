@@ -386,7 +386,7 @@ final class api_test extends externallib_advanced_testcase {
 
         $innerstructure4 = $innerstructure3->content;
         $this->assertTrue($innerstructure4 instanceof external_single_structure);
-        $this->assertCount(2, $innerstructure4->keys);
+        $this->assertCount(3, $innerstructure4->keys);
         $this->assertEquals(VALUE_OPTIONAL, $innerstructure4->required);
         $this->assertEquals('An answer to the question', $innerstructure4->desc);
 
@@ -401,6 +401,12 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('The fractional grade of the answer', $componentvalue->desc);
         $this->assertEquals(PARAM_FLOAT, $componentvalue->type);
+
+        $componentvalue = $innerstructure4->keys['feedback'];
+        $this->assertTrue($componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('The feedback to the answer', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
     }
 
     /**
@@ -615,6 +621,7 @@ final class api_test extends externallib_advanced_testcase {
         $question2 = $questiongenerator->create_question('multichoice', null, ['category' => $category->id]);
         // Create a true/false question.
         $question3 = $questiongenerator->create_question('truefalse', null, ['category' => $category->id]);
+
         // Add all questions to the quiz.
         quiz_add_quiz_question($question1->id, $quiz);
         quiz_add_quiz_question($question2->id, $quiz);
@@ -636,19 +643,25 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(4, $rhett[1]['options']['answers']);
         $this->assertEquals('One', $rhett[1]['options']['answers'][0]['text']);
         $this->assertEquals(0.5, $rhett[1]['options']['answers'][0]['grade']);
+        $this->assertEquals('One is odd.', $rhett[1]['options']['answers'][0]['feedback']);
         $this->assertEquals('Two', $rhett[1]['options']['answers'][1]['text']);
         $this->assertEquals(0.0, $rhett[1]['options']['answers'][1]['grade']);
+        $this->assertEquals('Two is even.', $rhett[1]['options']['answers'][1]['feedback']);
         $this->assertEquals('Three', $rhett[1]['options']['answers'][2]['text']);
         $this->assertEquals(0.5, $rhett[1]['options']['answers'][2]['grade']);
+        $this->assertEquals('Three is odd.', $rhett[1]['options']['answers'][2]['feedback']);
         $this->assertEquals('Four', $rhett[1]['options']['answers'][3]['text']);
         $this->assertEquals(0.0, $rhett[1]['options']['answers'][3]['grade']);
+        $this->assertEquals('Four is even.', $rhett[1]['options']['answers'][3]['feedback']);
         // Check the answers to the true/false question.
         $this->assertEquals($question3->id, $rhett[2]['id']);
         $this->assertCount(2, $rhett[2]['options']['answers']);
         $this->assertEquals('True', $rhett[2]['options']['answers'][0]['text']);
         $this->assertEquals(1.0, $rhett[2]['options']['answers'][0]['grade']);
+        $this->assertEquals('This is the right answer.', $rhett[2]['options']['answers'][0]['feedback']);
         $this->assertEquals('False', $rhett[2]['options']['answers'][1]['text']);
         $this->assertEquals(0.0, $rhett[2]['options']['answers'][1]['grade']);
+        $this->assertEquals('This is the wrong answer.', $rhett[2]['options']['answers'][1]['feedback']);
     }
 
     /**
