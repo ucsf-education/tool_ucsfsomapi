@@ -269,15 +269,84 @@ class api extends external_api {
 
             foreach ($questions as $question) {
                 if (! array_key_exists($question->id, $rhett)) {
+                    $textwithlinks = question_rewrite_question_urls(
+                        $question->questiontext,
+                        'webservice/pluginfile.php',
+                        $question->contextid,
+                        'question',
+                        'questiontext',
+                        ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                        $question->id
+                    );
+                    $generalfeedbackwithlinks = question_rewrite_question_urls(
+                        $question->generalfeedback,
+                        'webservice/pluginfile.php',
+                        $question->contextid,
+                        'question',
+                        'generalfeedback',
+                        ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                        $question->id
+                    );
                     $rhett[$question->id] = [
                         'id' => $question->id,
                         'name' => util::format_string($question->name, $context),
-                        'text' => util::format_text($question->questiontext, $question->questiontextformat, $context)[0],
+                        'text' => util::format_text($textwithlinks, $question->questiontextformat, $context)[0],
                         'defaultmarks' => $question->defaultmark,
                         'type' => $question->qtype,
+                        'generalfeedback' => util::format_text(
+                            $generalfeedbackwithlinks,
+                            $question->generalfeedbackformat,
+                            $context
+                        )[0],
                         'questionbankentryid' => $question->questionbankentryid,
                         'quizzes' => [ $quiz->id ],
                     ];
+                    // Question-type specific additional data points.
+                    // Grader info for Essay questions.
+                    if ('essay' === $rhett[$question->id]['type']) {
+                        $graderinfowithlinks = question_rewrite_question_urls(
+                            $question->options->graderinfo,
+                            'webservice/pluginfile.php',
+                            $question->contextid,
+                            'qtype_essay',
+                            'graderinfo',
+                            ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                            $question->id
+                        );
+                        $rhett[$question->id]['options']['graderinfo'] = util::format_text(
+                            $graderinfowithlinks, $question->options->graderinfoformat, $context)[0];
+                    }
+                    // Add question answers, if there are any.
+                    if (property_exists($question, 'options')
+                        && property_exists($question->options, 'answers')
+                        && $question->options->answers) {
+                        foreach ($question->options->answers as $answer) {
+                            $answerwithfilelinks = question_rewrite_question_urls(
+                                $answer->answer,
+                                'webservice/pluginfile.php',
+                                $question->contextid,
+                                'question',
+                                'answer',
+                                ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                                $answer->id
+                            );
+                            $feedbackwithfilelinks = question_rewrite_question_urls(
+                                $answer->feedback,
+                                'webservice/pluginfile.php',
+                                $question->contextid,
+                                'question',
+                                'answerfeedback',
+                                ['preview', $question->contextid, 'tool_ucsfsomapi'],
+                                $answer->id
+                            );
+                            $rhett[$question->id]['options']['answers'][] = [
+                                'text' => util::format_text($answerwithfilelinks, $answer->answerformat, $context)[0],
+                                'grade' => $answer->fraction,
+                                'feedback' => util::format_text($feedbackwithfilelinks, $answer->feedbackformat, $context)[0],
+                            ];
+                        }
+                    }
+
                     // Bolt on the question ids of all revisions of this question.
                     $versions = self::get_question_versions_by_questionbankentry($question->questionbankentryid);
                     $ids = array_map(function ($version) {
@@ -319,6 +388,7 @@ class api extends external_api {
                 'name' => new external_value(PARAM_TEXT, 'Question name', VALUE_REQUIRED),
                 'text' => new external_value(PARAM_RAW, 'Question text', VALUE_REQUIRED),
                 'type' => new external_value(PARAM_TEXT, 'Question type', VALUE_REQUIRED),
+                'generalfeedback' => new external_value(PARAM_RAW, 'General feedback for this question', VALUE_REQUIRED),
                 'defaultmarks' => new external_value(PARAM_FLOAT, 'Default marks for this question.', VALUE_REQUIRED),
                 'quizzes' => new external_multiple_structure(
                     new external_value(PARAM_INT, 'Quiz ID', VALUE_REQUIRED),
@@ -330,6 +400,34 @@ class api extends external_api {
                     PARAM_INT,
                     'The question bank entry id for this question',
                     VALUE_REQUIRED
+                ),
+                'options' => new external_single_structure(
+                    [
+                        'graderinfo' => new external_value(
+                            PARAM_RAW,
+                            'Information for graders on Essay questions',
+                            VALUE_OPTIONAL
+                        ),
+                        'answers' => new external_multiple_structure(
+                            new external_single_structure(
+                                [
+                                    'text' => new external_value(PARAM_RAW, 'The text of the answer', VALUE_REQUIRED),
+                                    'grade' => new external_value(
+                                        PARAM_FLOAT,
+                                        'The fractional grade of the answer',
+                                        VALUE_REQUIRED
+                                    ),
+                                    'feedback' => new external_value(PARAM_RAW, 'The feedback to the answer', VALUE_REQUIRED),
+                                ],
+                                'An answer to the question',
+                                VALUE_OPTIONAL
+                            ),
+                            'Question answers',
+                            VALUE_OPTIONAL
+                        ),
+                    ],
+                    'Additional data points that are question-type specific',
+                    VALUE_OPTIONAL,
                 ),
             ]),
         );
@@ -422,7 +520,7 @@ class api extends external_api {
             ['quizids' => new external_multiple_structure(
                 new external_value(PARAM_INT, 'Quiz ID')
                 , 'List of quiz IDs.',
-                VALUE_REQUIRED
+                VALUE_REQUIRED,
             )]
         );
     }
