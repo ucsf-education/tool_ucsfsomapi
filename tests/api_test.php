@@ -845,11 +845,17 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($timefinish1, $rhett[0]['timefinish']);
         $this->assertCount(2, $rhett[0]['questions']);
         $this->assertEquals($question1->id, $rhett[0]['questions'][0]['id']);
-        $this->assertEquals($attemptobj1->get_question_usage()->get_question_attempt(1)->get_database_id(), $rhett[0]['questions'][0]['attemptid']);
+        $this->assertEquals(
+            $attemptobj1->get_question_usage()->get_question_attempt(1)->get_database_id(),
+            $rhett[0]['questions'][0]['attemptid']
+        );
         $this->assertEquals(1.0, $rhett[0]['questions'][0]['mark']); // Correct answer.
         $this->assertEquals($answers1[1], $rhett[0]['questions'][0]['answer']);
         $this->assertEquals($question2->id, $rhett[0]['questions'][1]['id']);
-        $this->assertEquals($attemptobj1->get_question_usage()->get_question_attempt(2)->get_database_id(), $rhett[0]['questions'][1]['attemptid']);
+        $this->assertEquals(
+            $attemptobj1->get_question_usage()->get_question_attempt(2)->get_database_id(),
+            $rhett[0]['questions'][1]['attemptid']
+        );
         $this->assertEquals(0.0, $rhett[0]['questions'][1]['mark']); // Wrong answer.
         $this->assertEquals($answers1[2], $rhett[0]['questions'][1]['answer']);
 
@@ -860,11 +866,17 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($timefinish2, $rhett[1]['timefinish']);
         $this->assertCount(2, $rhett[1]['questions']);
         $this->assertEquals($question1->id, $rhett[1]['questions'][0]['id']);
-        $this->assertEquals($attemptobj2->get_question_usage()->get_question_attempt(1)->get_database_id(), $rhett[1]['questions'][0]['attemptid']);
+        $this->assertEquals(
+            $attemptobj2->get_question_usage()->get_question_attempt(1)->get_database_id(),
+            $rhett[1]['questions'][0]['attemptid']
+        );
         $this->assertEquals(0.0, $rhett[1]['questions'][0]['mark']); // Wrong answer.
         $this->assertEquals($answers2[1], $rhett[1]['questions'][0]['answer']);
         $this->assertEquals($question2->id, $rhett[1]['questions'][1]['id']);
-        $this->assertEquals($attemptobj2->get_question_usage()->get_question_attempt(2)->get_database_id(), $rhett[1]['questions'][1]['attemptid']);
+        $this->assertEquals(
+            $attemptobj2->get_question_usage()->get_question_attempt(2)->get_database_id(),
+            $rhett[1]['questions'][1]['attemptid']
+        );
         $this->assertEquals(1.0, $rhett[1]['questions'][1]['mark']); // Correct answer.
         $this->assertEquals($answers2[2], $rhett[1]['questions'][1]['answer']);
     }
@@ -1001,7 +1013,6 @@ final class api_test extends externallib_advanced_testcase {
         $this->setAdminUser();
         [$course, $quiz] = $this->create_course_and_quiz();
         $question = $this->create_question($quiz);
-        // $attemptid = $this->create_quiz_attempt($quiz, $student);
 
         // Retrieve attempts for the quiz, should come up empty-handed.
         $result = external_api::clean_returnvalue(
@@ -1068,7 +1079,7 @@ final class api_test extends externallib_advanced_testcase {
      * It then calls the API function with an invalid attempt ID and verifies that
      * the expected exception is thrown.
      */
-    public function test_set_question_attempt_mark_invalid_attemptid() {
+    public function test_set_question_attempt_mark_invalid_attemptid(): void {
         global $DB;
 
         // Expect an exception when calling the API with an invalid attempt ID.
@@ -1083,7 +1094,7 @@ final class api_test extends externallib_advanced_testcase {
     /**
      * Test set_question_attempt_mark with invalid mark.
      */
-    public function test_set_question_attempt_mark_invalid_mark() {
+    public function test_set_question_attempt_mark_invalid_mark(): void {
         global $DB;
 
         // Set up the test environment.
@@ -1135,14 +1146,13 @@ final class api_test extends externallib_advanced_testcase {
     /**
      * Test set_question_attempt_mark with invalid comment.
      */
-    public function test_set_question_attempt_mark_invalid_comment() {
+    public function test_set_question_attempt_mark_invalid_comment(): void {
         global $DB;
 
         // Set up the test environment.
         $this->setAdminUser();
         [$course, $quiz] = $this->create_course_and_quiz();
         $question = $this->create_question($quiz);
-
 
         // Retrieve attempts for the quiz, should come up empty-handed.
         $result = external_api::clean_returnvalue(
@@ -1175,22 +1185,26 @@ final class api_test extends externallib_advanced_testcase {
         $attemptid = $qa->get_database_id();
 
         // Call the method with an invalid comment.
+        $invalidcomment = "\0Invalid\0Comment";
         $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('Invalid parameter value detected (Invalid external api parameter: the value is " Invalid Comment", the server was expecting "raw" type): Invalid external api parameter: the value is " Invalid Comment", the server was expecting "raw" type');
+        $this->expectExceptionMessage(
+            'Invalid parameter value detected (Invalid external api parameter: '
+            .'the value is "' . $invalidcomment . '", the server was expecting "raw" type): '
+            .'Invalid external api parameter: the value is "' . $invalidcomment . '", '
+            .'the server was expecting "raw" type'
+        );
 
         // Call the API function with valid parameters.
         $result = external_api::clean_returnvalue(
             api::set_question_attempt_mark_returns(),
-            api::set_question_attempt_mark($attemptid, '1.0', "\0Invalid\0Comment")
-            // api::set_question_attempt_mark($attemptid, '1.0', null)
-            // api::set_question_attempt_mark($attemptid, '1.0', str_repeat('a', 10001))
+            api::set_question_attempt_mark($attemptid, '1.0', $invalidcomment)
         );
     }
 
     /**
      * Test set_question_attempt_mark with unfinished attempt.
      */
-    public function test_set_question_attempt_mark_unfinished_attempt() {
+    public function test_set_question_attempt_mark_unfinished_attempt(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1234,7 +1248,7 @@ final class api_test extends externallib_advanced_testcase {
     /**
      * Test set_question_attempt_mark with missing 'mod/quiz:grade' capability.
      */
-    public function test_set_question_attempt_mark_missing_quiz_grade_capability() {
+    public function test_set_question_attempt_mark_missing_quiz_grade_capability(): void {
         global $DB;
 
         $this->resetAfterTest(true);
@@ -1245,7 +1259,6 @@ final class api_test extends externallib_advanced_testcase {
         // Create a mock quiz attempt and question attempt.
         [$course, $quiz] = $this->create_course_and_quiz();
         $question = $this->create_question($quiz);
-
 
         // Retrieve attempts for the quiz, should come up empty-handed.
         $result = external_api::clean_returnvalue(
@@ -1326,7 +1339,10 @@ final class api_test extends externallib_advanced_testcase {
         // Create a course.
         $course = $this->getDataGenerator()->create_course();
         // Get a hold of the quiz module contexts.
-        $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id, 'name' => 'Sample Quiz', 'sumgrades' => 1]);
+        $quiz = $this->getDataGenerator()->create_module(
+            'quiz',
+            ['course' => $course->id, 'name' => 'Sample Quiz', 'sumgrades' => 1]
+        );
 
         return [$course, $quiz];
     }
@@ -1353,7 +1369,6 @@ final class api_test extends externallib_advanced_testcase {
      */
     private function create_student_and_enroll($course): object {
         $student = $this->getDataGenerator()->create_user();
-        //$studentrole = $DB->get_record('role', ['shortname' => 'student']);
         $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
         return $student;
     }
