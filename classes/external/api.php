@@ -690,32 +690,30 @@ class api extends external_api {
 
     /**
      * Implements the set_question_attempt_mark web service endpoint.
+     * Reference: mod/quiz/comment.php.
      *
-     * @param int $attemptid The question attempt ID.
+     * @param int $questionattemptid The question attempt ID.
      * @param string $mark The mark for this question attempt.
      * @param string|null $comment The comment for this question attempt (use null for new comment).
      * @return int A status flag
-     * @throws invalid_parameter_exception
      * @throws moodle_exception
+     * @throws invalid_parameter_exception
      */
-    public static function set_question_attempt_mark(int $attemptid, string $mark, $comment = null): int {
+    public static function set_question_attempt_mark(int $questionattemptid, string $mark, $comment = null): int {
         global $USER, $DB, $CFG;
         require_once($CFG->dirroot . '/lib/grade/constants.php');
-        require_once($CFG->dirroot . '/lib/modinfolib.php');
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
-        [
-            'attemptid' => $attemptid,
+        $params = [
+            'attemptid' => $questionattemptid,
             'mark' => $mark,
             'comment' => $comment,
-        ] = self::validate_parameters(self::set_question_attempt_mark_parameters(), [
-            'attemptid' => $attemptid,
-            'mark' => $mark,
-            'comment' => $comment,
-        ]);
+        ];
+        $params = self::validate_parameters(self::set_question_attempt_mark_parameters(), $params);
 
-        if (!isset($attemptid)) {
-            throw new \coding_exception('Invalid question attempt id');
+        // Prevent functions like file_get_submitted_draft_itemid() or form library requiring a sesskey for WS requests.
+        if (WS_SERVER || PHPUNIT_TEST) {
+            $USER->ignoresesskey = true;
         }
 
         // Find the quiz attempt id and the slot from question attempt id.
@@ -725,18 +723,18 @@ class api extends external_api {
                 FROM {quiz_attempts} qa
                 JOIN {question_attempts} qqa ON qa.uniqueid = qqa.questionusageid
                 WHERE qqa.id = ?;';
-        $qadata = $DB->get_record_sql($sql, [$attemptid]);
+        $qadata = $DB->get_record_sql($sql, [$questionattemptid]);
 
         // If $qadata is empty return error or exception.
         if (empty($qadata)) {
-            throw new \moodle_exception('Invalid question attempt ID.');
+            throw new \moodle_exception('invalidquestionid', 'quiz');
         }
+
         $quizattemptid = $qadata->qaid;
         $slot = $qadata->slot;
 
         $quizattemptobj = quiz_create_attempt_handling_errors($quizattemptid);
         $quizattemptobj->preload_all_attempt_step_users();
-        $student = $DB->get_record('user', ['id' => $quizattemptobj->get_userid()]);
 
         // Can only grade finished attempts.
         if (!$quizattemptobj->is_finished()) {
@@ -762,12 +760,10 @@ class api extends external_api {
         $_POST[$prefix.":minfraction"] = $qa->get_min_fraction();
         $_POST[$prefix.":maxfraction"] = $qa->get_max_fraction();
 
-        // Looks like I need to initialize these values, too.
+        // Set the comment text and format.
+        // See if there is a comment already.
         list($commenttext, $commentformat, $commentstep) = $qa->get_current_manual_comment();
-        if ($qa->has_manual_comment()) {
-            list($draftitemid, $commenttext) = $commentstep->prepare_response_files_draft_itemid_with_text(
-                'bf_comment', $quizattemptobj->get_quizobj()->get_context()->id, $commenttext);
-        } else if (!empty($commentstep)) {
+        if (!empty($commentstep)) {
                 list($draftitemid, $commenttext) = $commentstep->prepare_response_files_draft_itemid_with_text(
                 'bf_comment', $quizattemptobj->get_quizobj()->get_context()->id, $commenttext);
         } else {
@@ -777,11 +773,8 @@ class api extends external_api {
         $_POST[$prefix."-comment"] = $comment ?? $commenttext;
         $_POST[$prefix."-commentformat"] = $commentformat;  // Consider to use FORMAT_PLAIN, 2 (See lib/weblib.php L54).
         $_POST[$prefix."-comment:itemid"] = $draftitemid;
-        // This needs to be in $_REQUEST as well for the file picker to work. (ref. filelib.php L881).
+        // This needs to be in $_REQUEST as well for the file picker to work. (ref. lib/filelib.php L881).
         $_REQUEST[$prefix."-comment:itemid"] = $draftitemid;
-
-        // Brutally extract sesskey from $USER.
-        $_POST["sesskey"] = $USER->sesskey;
 
         // Process any data that was submitted.
         if (question_engine::is_manual_grade_in_range($quizattemptobj->get_uniqueid(), $slot)) {

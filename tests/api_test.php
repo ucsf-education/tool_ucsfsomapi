@@ -1085,7 +1085,7 @@ final class api_test extends externallib_advanced_testcase {
 
         // Expect an exception when calling the API with an invalid attempt ID.
         $this->expectException(\moodle_exception::class);
-        $this->expectExceptionMessage('Invalid question attempt ID.');
+        $this->expectExceptionMessage('Invalid question id');
 
         // Call the method with an invalid attempt ID.
         api::set_question_attempt_mark(0, '1.0', 'Invalid attempt');
