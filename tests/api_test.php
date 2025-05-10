@@ -1045,6 +1045,9 @@ final class api_test extends externallib_advanced_testcase {
         $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
         $attemptid = $qa->get_database_id();
 
+        // Catch the event.
+        $sink = $this->redirectEvents();
+
         // Call the API function with valid parameters.
         $result = external_api::clean_returnvalue(
             api::set_question_attempt_mark_returns(),
@@ -1052,6 +1055,25 @@ final class api_test extends externallib_advanced_testcase {
         );
         // Assert the result.
         $this->assertEquals(GRADE_UPDATE_OK, $result);
+
+        // Validate the events.
+        $events = $sink->get_events();
+        $sink->close();
+
+        // Check that the event count is correct.
+        $this->assertCount(1, $events);
+
+        // Validate the question_manually_graded event.
+        $event = $events[0];
+        $this->assertInstanceOf('\mod_quiz\event\question_manually_graded', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($qa->get_question_id(), $event->objectid);
+        $this->assertEquals($course->id, $event->courseid);
+        $this->assertEquals($attemptobj->get_context(), $event->get_context());
+        $this->assertEquals($attempt->quiz, $event->other['quizid']); // Should be the user, but PHP Unit complains...
+        $this->assertEquals($attempt->id, $event->other['attemptid']); // Should be the user, but PHP Unit complains...
+        $this->assertEquals($qa->get_slot(), $event->other['slot']); // Should be the user, but PHP Unit complains...
+        $this->assertEventContextNotUsed($event);
 
         // Check the database to ensure the mark was set correctly.
         $sql = 'SELECT qasd.*
