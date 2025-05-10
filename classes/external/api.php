@@ -727,7 +727,7 @@ class api extends external_api {
 
         // If $qadata is empty return error or exception.
         if (empty($qadata)) {
-            throw new \moodle_exception('invalidquestionid', 'quiz');
+            throw new moodle_exception('invalidquestionid', 'quiz');
         }
 
         $quizattemptid = $qadata->qaid;
@@ -738,7 +738,7 @@ class api extends external_api {
 
         // Can only grade finished attempts.
         if (!$quizattemptobj->is_finished()) {
-            throw new \moodle_exception('attemptclosed', 'quiz');
+            throw new moodle_exception('attemptclosed', 'quiz');
         }
 
         // Check login and permissions.
@@ -752,10 +752,10 @@ class api extends external_api {
         // Set the sequence check count to the latest value.
         $_POST[$prefix.":sequencecheck"] = $qa->get_sequence_check_count();
 
-        $_POST["attempt"] = "$quizattemptid";
+        $_POST["attempt"] = (string) $quizattemptid;
         $_POST["slot"] = (string) $slot;
         $_POST["slots"] = (string) $slot;      // This is set to $slot in /mod/quiz/comment.php, line 122 (is this a bug?).
-        $_POST[$prefix."-mark"] = "$mark";
+        $_POST[$prefix."-mark"] = (string) $mark;
         $_POST[$prefix."-maxmark"] = $qa->get_max_mark();
         $_POST[$prefix.":minfraction"] = $qa->get_min_fraction();
         $_POST[$prefix.":maxfraction"] = $qa->get_max_fraction();
