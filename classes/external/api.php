@@ -753,8 +753,8 @@ class api extends external_api {
         $_POST[$prefix.":sequencecheck"] = $qa->get_sequence_check_count();
 
         $_POST["attempt"] = "$quizattemptid";
-        $_POST["slot"] = "$slot";
-        $_POST["slots"] = "$slot";      // This is set to $slot in /mod/quiz/comment.php, line 122 (is this a bug?).
+        $_POST["slot"] = (string) $slot;
+        $_POST["slots"] = (string) $slot;      // This is set to $slot in /mod/quiz/comment.php, line 122 (is this a bug?).
         $_POST[$prefix."-mark"] = "$mark";
         $_POST[$prefix."-maxmark"] = $qa->get_max_mark();
         $_POST[$prefix.":minfraction"] = $qa->get_min_fraction();
