@@ -704,6 +704,17 @@ class api extends external_api {
         require_once($CFG->dirroot . '/lib/grade/constants.php');
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
+        // Log this API call.
+        $params = [
+            'objectid' => $questionattemptid,
+            'other' => [
+                'mark' => $mark,
+                'comment' => $comment,
+            ],
+        ];
+        $event = \tool_ucsfsomapi\event\set_question_attempt_mark_called::create($params);
+        $event->trigger();
+
         $params = [
             'attemptid' => $questionattemptid,
             'mark' => $mark,
@@ -793,7 +804,7 @@ class api extends external_api {
                     'slot' => $slot,
                 ],
             ];
-            $event = \mod_quiz\event\question_manually_graded::create($params);
+            $event = \tool_ucsfsomapi\event\question_attempt_marked::create($params);
             $event->trigger();
 
             return GRADE_UPDATE_OK;
