@@ -23,8 +23,6 @@
  */
 namespace tool_ucsfsomapi\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The tool_ucsfsomapi set_question_attempt_mark_called event class.
  *
@@ -67,11 +65,11 @@ class set_question_attempt_mark_called extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The user with id '$this->userid' called set_question_attempt_mark for the question attempt id '$this->objectid' to" .
-            "set mark to '{$this->other['mark']}' with grader's comment '{$this->other['comment']}'.";
+        return "The user with id '$this->userid' called set_question_attempt_mark for the question attempt id " .
+            "'$this->objectid' to set mark to '{$this->other['mark']}' with grader's comment '{$this->other['comment']}'.";
     }
 
-   /**
+    /**
      * Custom validation.
      *
      * @throws \coding_exception
@@ -89,11 +87,11 @@ class set_question_attempt_mark_called extends \core\event\base {
         }
     }
 
+    /**
+     * Summary of get_objectid_mapping
+     * @return array{db: string, restore: string}
+     */
     public static function get_objectid_mapping() {
         return ['db' => 'question', 'restore' => 'question'];
-    }
-
-    public static function get_other_mapping() {
-        return false;
     }
 }
