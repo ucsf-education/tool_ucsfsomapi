@@ -306,7 +306,7 @@ final class api_test extends externallib_advanced_testcase {
 
         $innerstructure = $structure->content;
         $this->assertTrue($innerstructure instanceof external_single_structure);
-        $this->assertCount(8, $innerstructure->keys);
+        $this->assertCount(10, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
         $this->assertTrue( $componentvalue instanceof external_value);
@@ -324,6 +324,12 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertTrue( $componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question text', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
+
+        $componentvalue = $innerstructure->keys['generalfeedback'];
+        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('General feedback for this question', $componentvalue->desc);
         $this->assertEquals(PARAM_RAW, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['type'];
@@ -361,6 +367,47 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('The question bank entry id for this question', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
+
+        $innerstructure2 = $innerstructure->keys['options'];
+        $this->assertTrue($innerstructure2 instanceof external_single_structure);
+        $this->assertCount(2, $innerstructure2->keys);
+        $this->assertEquals(VALUE_OPTIONAL, $innerstructure2->required);
+        $this->assertEquals('Additional data points that are question-type specific', $innerstructure2->desc);
+
+        $componentvalue = $innerstructure2->keys['graderinfo'];
+        $this->assertTrue($componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_OPTIONAL, $componentvalue->required);
+        $this->assertEquals('Information for graders on Essay questions', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
+
+        $innerstructure3 = $innerstructure2->keys['answers'];
+        $this->assertTrue($innerstructure3 instanceof external_multiple_structure);
+        $this->assertEquals(VALUE_OPTIONAL, $innerstructure3->required);
+        $this->assertEquals('Question answers', $innerstructure3->desc);
+
+        $innerstructure4 = $innerstructure3->content;
+        $this->assertTrue($innerstructure4 instanceof external_single_structure);
+        $this->assertCount(3, $innerstructure4->keys);
+        $this->assertEquals(VALUE_OPTIONAL, $innerstructure4->required);
+        $this->assertEquals('An answer to the question', $innerstructure4->desc);
+
+        $componentvalue = $innerstructure4->keys['text'];
+        $this->assertTrue($componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('The text of the answer', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
+
+        $componentvalue = $innerstructure4->keys['grade'];
+        $this->assertTrue($componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('The fractional grade of the answer', $componentvalue->desc);
+        $this->assertEquals(PARAM_FLOAT, $componentvalue->type);
+
+        $componentvalue = $innerstructure4->keys['feedback'];
+        $this->assertTrue($componentvalue instanceof external_value);
+        $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
+        $this->assertEquals('The feedback to the answer', $componentvalue->desc);
+        $this->assertEquals(PARAM_RAW, $componentvalue->type);
     }
 
     /**
@@ -398,10 +445,15 @@ final class api_test extends externallib_advanced_testcase {
         $category = $questiongenerator->create_question_category();
         $maxmark1 = 2.0;
         $maxmark2 = 0.67;
+        $generalfeedback1 = '<p>Lorem Ipsum.</p>';
         $question1 = $questiongenerator->create_question(
             'truefalse',
             null,
-            ['name' => 'Yes or no', 'category' => $category->id]
+            [
+                'name' => 'Yes or no',
+                'category' => $category->id,
+                'generalfeedback' => ['text' => $generalfeedback1, 'format' => FORMAT_HTML],
+            ]
         );
         // Add this question to quizzes 1 and 2.
         quiz_add_quiz_question($question1->id, $quiz1, maxmark: $maxmark1);
@@ -423,7 +475,14 @@ final class api_test extends externallib_advanced_testcase {
         quiz_add_quiz_question($question3->id, $quiz3);
 
         // Update the third question.
-        $question3 = $questiongenerator->update_question($question3, null, ['name' => 'A new name']);
+        $question3 = $questiongenerator->update_question(
+                $question3,
+                null,
+                [
+                    'name' => 'A new name',
+                    'generalfeedback' => ['text' => '   ', 'format' => FORMAT_MOODLE],
+                ]
+        );
 
         // Get a handle on all versions of these questions.
         $question1versions = question_bank::get_all_versions_of_question($question1->id);
@@ -455,6 +514,8 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question1->defaultmark, $rhett[0]['defaultmarks']);
         $this->assertEquals($question1->qtype, $rhett[0]['type']);
+        $this->assertEquals($generalfeedback1, $rhett[0]['generalfeedback']);
+
         $this->assertEquals($question1->questionbankentryid, $rhett[0]['questionbankentryid']);
         $this->assertEquals([$quiz1->id, $quiz2->id], $rhett[0]['quizzes']);
         $this->assertCount(1, $rhett[0]['revisions']);
@@ -468,6 +529,7 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question2->defaultmark, $rhett[1]['defaultmarks']);
         $this->assertEquals($question2->qtype, $rhett[1]['type']);
+        $this->assertEquals('Generalfeedback: 3.14 is the right answer.', $rhett[1]['generalfeedback']);
         $this->assertEquals($question2->questionbankentryid, $rhett[1]['questionbankentryid']);
         $this->assertEquals([$quiz2->id], $rhett[1]['quizzes']);
         $this->assertCount(1, $rhett[1]['revisions']);
@@ -481,11 +543,126 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals($question3->defaultmark, $rhett[2]['defaultmarks']);
         $this->assertEquals($question3->qtype, $rhett[2]['type']);
+        $this->assertEquals('', $rhett[2]['generalfeedback']);
         $this->assertEquals($question3->questionbankentryid, $rhett[2]['questionbankentryid']);
         $this->assertEquals([$quiz2->id, $quiz3->id], $rhett[2]['quizzes']);
         $this->assertCount(2, $rhett[2]['revisions']);
         $this->assertEquals(reset($question3versions)->questionid, $rhett[2]['revisions'][0]);
         $this->assertEquals(next($question3versions)->questionid, $rhett[2]['revisions'][1]);
+    }
+
+    /**
+     * Tests "get_questions" endpoint and check for grader info in the payload.
+     */
+    public function test_get_questions_graderinfo(): void {
+        $this->setAdminUser();
+
+        // Create a course category, a course, and a quiz.
+        $coursecategory = $this->getDataGenerator()->create_category();
+        $course1 = $this->getDataGenerator()->create_course(['category' => $coursecategory->id]);
+        $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course1->id, 'name' => 'Foo']);
+        $cm = get_course_and_cm_from_instance($quiz, 'quiz')[1];
+        $context = context_module::instance($cm->id);
+
+        // Add questions to quizzes.
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $questiongenerator->create_question_category();
+        // Create an Essay question without grader info.
+        $graderinfo1 = '<p>Foobar</p>';
+        $question1 = $questiongenerator->create_question(
+            'essay',
+            null,
+            ['category' => $category->id, 'graderinfo' => ['text' => $graderinfo1, 'format' => FORMAT_HTML]]
+        );
+        // Create another Essay question, this one has some grader info.
+        $question2 = $questiongenerator->create_question('essay', null, ['category' => $category->id]);
+        // Create a non-Essay question.
+        $question3 = $questiongenerator->create_question('truefalse', null, ['category' => $category->id]);
+        // Add all questions to the quiz.
+        quiz_add_quiz_question($question1->id, $quiz);
+        quiz_add_quiz_question($question2->id, $quiz);
+        quiz_add_quiz_question($question3->id, $quiz);
+
+        // Retrieve all questions.
+        $rhett = external_api::clean_returnvalue(
+            api::get_questions_returns(),
+            api::get_questions([$quiz->id])
+        );
+
+        // Check output specifically for grader info.
+        $this->assertCount(3, $rhett);
+        $this->assertEquals($question1->id, $rhett[0]['id']);
+        $this->assertEquals($graderinfo1, $rhett[0]['options']['graderinfo']);
+        $this->assertEquals($question2->id, $rhett[1]['id']);
+        $this->assertEquals('', $rhett[1]['options']['graderinfo']);
+        $this->assertEquals($question3->id, $rhett[2]['id']);
+        // True/false questions don't have grader info.
+        $this->assertArrayNotHasKey('graderinfo', $rhett[2]['options']);
+    }
+
+    /**
+     * Tests "get_questions" endpoint and check for answers in the payload.
+     */
+    public function test_get_questions_answers(): void {
+        $this->setAdminUser();
+
+        // Create a course category, a course, and a quiz.
+        $coursecategory = $this->getDataGenerator()->create_category();
+        $course1 = $this->getDataGenerator()->create_course(['category' => $coursecategory->id]);
+        $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course1->id, 'name' => 'Foo']);
+        $cm = get_course_and_cm_from_instance($quiz, 'quiz')[1];
+        $context = context_module::instance($cm->id);
+
+        // Add questions to quizzes.
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $category = $questiongenerator->create_question_category();
+        // Create an Essay question.
+        $question1 = $questiongenerator->create_question('essay', null, ['category' => $category->id]);
+        // Create multi-choice question.
+        $question2 = $questiongenerator->create_question('multichoice', null, ['category' => $category->id]);
+        // Create a true/false question.
+        $question3 = $questiongenerator->create_question('truefalse', null, ['category' => $category->id]);
+
+        // Add all questions to the quiz.
+        quiz_add_quiz_question($question1->id, $quiz);
+        quiz_add_quiz_question($question2->id, $quiz);
+        quiz_add_quiz_question($question3->id, $quiz);
+
+        // Retrieve all questions.
+        $rhett = external_api::clean_returnvalue(
+            api::get_questions_returns(),
+            api::get_questions([$quiz->id])
+        );
+
+        // Check output specifically for grader info.
+        $this->assertCount(3, $rhett);
+        $this->assertEquals($question1->id, $rhett[0]['id']);
+        // Essay questions don't have answers.
+        $this->assertArrayNotHasKey('answers', $rhett[0]['options']);
+        // Check the answers to the multi-choice question.
+        $this->assertEquals($question2->id, $rhett[1]['id']);
+        $this->assertCount(4, $rhett[1]['options']['answers']);
+        $this->assertEquals('One', $rhett[1]['options']['answers'][0]['text']);
+        $this->assertEquals(0.5, $rhett[1]['options']['answers'][0]['grade']);
+        $this->assertEquals('One is odd.', $rhett[1]['options']['answers'][0]['feedback']);
+        $this->assertEquals('Two', $rhett[1]['options']['answers'][1]['text']);
+        $this->assertEquals(0.0, $rhett[1]['options']['answers'][1]['grade']);
+        $this->assertEquals('Two is even.', $rhett[1]['options']['answers'][1]['feedback']);
+        $this->assertEquals('Three', $rhett[1]['options']['answers'][2]['text']);
+        $this->assertEquals(0.5, $rhett[1]['options']['answers'][2]['grade']);
+        $this->assertEquals('Three is odd.', $rhett[1]['options']['answers'][2]['feedback']);
+        $this->assertEquals('Four', $rhett[1]['options']['answers'][3]['text']);
+        $this->assertEquals(0.0, $rhett[1]['options']['answers'][3]['grade']);
+        $this->assertEquals('Four is even.', $rhett[1]['options']['answers'][3]['feedback']);
+        // Check the answers to the true/false question.
+        $this->assertEquals($question3->id, $rhett[2]['id']);
+        $this->assertCount(2, $rhett[2]['options']['answers']);
+        $this->assertEquals('True', $rhett[2]['options']['answers'][0]['text']);
+        $this->assertEquals(1.0, $rhett[2]['options']['answers'][0]['grade']);
+        $this->assertEquals('This is the right answer.', $rhett[2]['options']['answers'][0]['feedback']);
+        $this->assertEquals('False', $rhett[2]['options']['answers'][1]['text']);
+        $this->assertEquals(0.0, $rhett[2]['options']['answers'][1]['grade']);
+        $this->assertEquals('This is the wrong answer.', $rhett[2]['options']['answers'][1]['feedback']);
     }
 
     /**
