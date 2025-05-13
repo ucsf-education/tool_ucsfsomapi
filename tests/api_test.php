@@ -1062,18 +1062,28 @@ final class api_test extends externallib_advanced_testcase {
         $sink->close();
 
         // Check that the event count is correct.
-        $this->assertCount(1, $events);
+        $this->assertCount(2, $events);
+
+        // Validate the call_to_set_question_attempt_mark_api event.
+        $event = $events[0];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($attemptid, $event->objectid);
+        $this->assertEquals(\context_system::instance(), $event->get_context());
+        $this->assertEquals('1', $event->other['mark']);
+        $this->assertEquals('Good job!', $event->other['comment']);
+        $this->assertEventContextNotUsed($event);
 
         // Validate the question_manually_graded event.
-        $event = $events[0];
-        $this->assertInstanceOf('\mod_quiz\event\question_manually_graded', $event);
+        $event = $events[1];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
         $this->assertEquals('question', $event->objecttable);
         $this->assertEquals($qa->get_question_id(), $event->objectid);
         $this->assertEquals($course->id, $event->courseid);
         $this->assertEquals($attemptobj->get_context(), $event->get_context());
-        $this->assertEquals($attempt->quiz, $event->other['quizid']); // Should be the user, but PHP Unit complains...
-        $this->assertEquals($attempt->id, $event->other['attemptid']); // Should be the user, but PHP Unit complains...
-        $this->assertEquals($qa->get_slot(), $event->other['slot']); // Should be the user, but PHP Unit complains...
+        $this->assertEquals($attempt->quiz, $event->other['quizid']);
+        $this->assertEquals($attempt->id, $event->other['attemptid']);
+        $this->assertEquals($qa->get_slot(), $event->other['slot']);
         $this->assertEventContextNotUsed($event);
 
         // Check the database to ensure the mark was set correctly.
