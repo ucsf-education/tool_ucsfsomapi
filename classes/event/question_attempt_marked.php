@@ -23,8 +23,6 @@
  */
 namespace tool_ucsfsomapi\event;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * The tool_ucsfsomapi question_attempt_marked event class.
  *
@@ -66,8 +64,8 @@ class question_attempt_marked extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The user with id '$this->userid' marked the question attempt with id '$this->objectid' for the attempt " .
-            "with id '{$this->other['attemptid']}' for the quiz with course module id '$this->contextinstanceid'.";
+        return "The user with id '$this->userid' marked the question attempt with id '$this->objectid' for the quiz " .
+            "attempt with id '{$this->other['attemptid']}' with course module id '$this->contextinstanceid'.";
     }
 
     /**
@@ -92,10 +90,18 @@ class question_attempt_marked extends \core\event\base {
         }
     }
 
+    /**
+     * Summary of get_objectid_mapping
+     * @return array{db: string, restore: string}
+     */
     public static function get_objectid_mapping() {
         return ['db' => 'question', 'restore' => 'question'];
     }
 
+    /**
+     * Summary of get_other_mapping
+     * @return array{quizid: array{db: string, restore: string}, attemptid: array{db: string, restore: string}}
+     */
     public static function get_other_mapping() {
         $othermapped = [];
         $othermapped['quizid'] = ['db' => 'quiz', 'restore' => 'quiz'];
