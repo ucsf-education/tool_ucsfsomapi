@@ -56,7 +56,7 @@ class set_question_attempt_mark_called extends \core\event\base {
      * @return string
      */
     public static function get_name() {
-        return get_string('eventset_question_attempt_mark_called', 'tool_ucsfsomapi');
+        return get_string('eventsetquestionattemptmarkcalled', 'tool_ucsfsomapi');
     }
 
     /**
@@ -80,10 +80,6 @@ class set_question_attempt_mark_called extends \core\event\base {
 
         if (!isset($this->other['mark'])) {
             throw new \coding_exception('The \'mark\' value must be set in other.');
-        }
-
-        if (!isset($this->other['comment'])) {
-            throw new \coding_exception('The \'comment\' value must be set in other.');
         }
     }
 
