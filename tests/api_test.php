@@ -1026,25 +1026,25 @@ final class api_test extends externallib_advanced_testcase {
         $student = $this->create_student_and_enroll($course);
 
         // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
+        $quizattempt = $this->create_and_start_quiz_attempt($quiz, $student);
 
         // Answer the question
         // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $quizattemptobj = quiz_attempt::create($quizattempt->id);
 
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
+            $quizattemptobj->get_question_usage(),
             [1 => 'Sample answer.'],
             true,
         );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
+        $quizattemptobj->process_submitted_actions(time(), false, $postdata);
         // Finish the attempt.
-        $attemptobj->process_attempt(time(), true, false, 1);
+        $quizattemptobj->process_attempt(time(), true, false, 1);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
-        $attemptid = $qa->get_database_id();
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $questionattemptid = $qa->get_database_id();
 
         // Catch the event.
         $sink = $this->redirectEvents();
@@ -1052,7 +1052,7 @@ final class api_test extends externallib_advanced_testcase {
         // Call the API function with valid parameters.
         $result = external_api::clean_returnvalue(
             api::set_question_attempt_mark_returns(),
-            api::set_question_attempt_mark($attemptid, 1.0, 'Good job!')
+            api::set_question_attempt_mark($questionattemptid, 1.0, 'Good job!')
         );
         // Assert the result.
         $this->assertEquals(GRADE_UPDATE_OK, $result);
@@ -1068,7 +1068,7 @@ final class api_test extends externallib_advanced_testcase {
         $event = $events[0];
         $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
         $this->assertEquals('question', $event->objecttable);
-        $this->assertEquals($attemptid, $event->objectid);
+        $this->assertEquals($questionattemptid, $event->objectid);
         $this->assertEquals(\context_system::instance(), $event->get_context());
         $this->assertEquals('1', $event->other['mark']);
         $this->assertEquals('Good job!', $event->other['comment']);
@@ -1080,9 +1080,9 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals('question', $event->objecttable);
         $this->assertEquals($qa->get_question_id(), $event->objectid);
         $this->assertEquals($course->id, $event->courseid);
-        $this->assertEquals($attemptobj->get_context(), $event->get_context());
-        $this->assertEquals($attempt->quiz, $event->other['quizid']);
-        $this->assertEquals($attempt->id, $event->other['attemptid']);
+        $this->assertEquals($quizattemptobj->get_context(), $event->get_context());
+        $this->assertEquals($quizattempt->quiz, $event->other['quizid']);
+        $this->assertEquals($quizattempt->id, $event->other['attemptid']);
         $this->assertEquals($qa->get_slot(), $event->other['slot']);
         $this->assertEventContextNotUsed($event);
 
@@ -1092,7 +1092,7 @@ final class api_test extends externallib_advanced_testcase {
                 JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
                 WHERE qas.questionattemptid = :qaid AND qasd.name = :markingfield
                 ORDER BY qas.sequencenumber DESC LIMIT 1';
-        $params = ['qaid' => $attemptid, 'markingfield' => '-mark'];
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-mark'];
         $qasd = $DB->get_record_sql($sql, $params);
 
         // Ensure the query result is valid.
@@ -1102,7 +1102,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals(1.0, $qasd->value);
 
         // Assert comment in the database.
-        $params = ['qaid' => $attemptid, 'markingfield' => '-comment'];
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-comment'];
         $qasd = $DB->get_record_sql($sql, $params);
 
         $this->assertEquals('Good job!', $qasd->value);
@@ -1133,25 +1133,25 @@ final class api_test extends externallib_advanced_testcase {
         $student = $this->create_student_and_enroll($course);
 
         // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
+        $quizattempt = $this->create_and_start_quiz_attempt($quiz, $student);
 
         // Answer the question
         // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
+        $quizattemptobj = quiz_attempt::create($quizattempt->id);
 
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
+            $quizattemptobj->get_question_usage(),
             [1 => 'Sample answer.'],
             true,
         );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
+        $quizattemptobj->process_submitted_actions(time(), false, $postdata);
         // Finish the attempt.
-        $attemptobj->process_attempt(time(), true, false, 1);
+        $quizattemptobj->process_attempt(time(), true, false, 1);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
-        $attemptid = $qa->get_database_id();
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $questionattemptid = $qa->get_database_id();
 
         // Catch the event.
         $sink = $this->redirectEvents();
@@ -1159,7 +1159,7 @@ final class api_test extends externallib_advanced_testcase {
         // Call the API function with valid parameters (no comment).
         $result = external_api::clean_returnvalue(
             api::set_question_attempt_mark_returns(),
-            api::set_question_attempt_mark($attemptid, 1.0)
+            api::set_question_attempt_mark($questionattemptid, 1.0)
         );
         // Assert the result.
         $this->assertEquals(GRADE_UPDATE_OK, $result);
@@ -1175,9 +1175,10 @@ final class api_test extends externallib_advanced_testcase {
         $event = $events[0];
         $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
         $this->assertEquals('question', $event->objecttable);
-        $this->assertEquals($attemptid, $event->objectid);
+        $this->assertEquals($questionattemptid, $event->objectid);
         $this->assertEquals(\context_system::instance(), $event->get_context());
         $this->assertEquals('1', $event->other['mark']);
+        $this->assertNotContains('comment', $event->other);
         $this->assertEventContextNotUsed($event);
 
         // Validate the question_manually_graded event.
@@ -1186,9 +1187,9 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals('question', $event->objecttable);
         $this->assertEquals($qa->get_question_id(), $event->objectid);
         $this->assertEquals($course->id, $event->courseid);
-        $this->assertEquals($attemptobj->get_context(), $event->get_context());
-        $this->assertEquals($attempt->quiz, $event->other['quizid']);
-        $this->assertEquals($attempt->id, $event->other['attemptid']);
+        $this->assertEquals($quizattemptobj->get_context(), $event->get_context());
+        $this->assertEquals($quizattempt->quiz, $event->other['quizid']);
+        $this->assertEquals($quizattempt->id, $event->other['attemptid']);
         $this->assertEquals($qa->get_slot(), $event->other['slot']);
         $this->assertEventContextNotUsed($event);
 
@@ -1198,7 +1199,7 @@ final class api_test extends externallib_advanced_testcase {
                 JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
                 WHERE qas.questionattemptid = :qaid AND qasd.name = :markingfield
                 ORDER BY qas.sequencenumber DESC LIMIT 1';
-        $params = ['qaid' => $attemptid, 'markingfield' => '-mark'];
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-mark'];
         $qasd = $DB->get_record_sql($sql, $params);
 
         // Ensure the query result is valid.

@@ -64,8 +64,18 @@ class question_attempt_marked extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The user with id '$this->userid' marked the question attempt with id '$this->objectid' for the quiz " .
-            "attempt with id '{$this->other['attemptid']}' with course module id '$this->contextinstanceid'.";
+        return "The user with id '$this->userid' marked the question attempt with id '{$this->other['attemptid']}' for the quiz " .
+            "attempt with id '{$this->objectid}' in course module id '{$this->contextinstanceid}'.";
+    }
+
+    /**
+     * Returns relevant URL.
+     *
+     * @return \moodle_url
+     */
+    public function get_url() {
+        return new \moodle_url('/mod/quiz/comment.php', ['attempt' => $this->other['attemptid'],
+            'slot' => $this->other['slot']]);
     }
 
     /**
@@ -95,7 +105,7 @@ class question_attempt_marked extends \core\event\base {
      * @return array{db: string, restore: string}
      */
     public static function get_objectid_mapping() {
-        return ['db' => 'question', 'restore' => 'question'];
+        return ['db' => 'question_attempts', 'restore' => 'question_attempts'];
     }
 
     /**
