@@ -1035,7 +1035,7 @@ final class api_test extends externallib_advanced_testcase {
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
             $attemptobj->get_question_usage(),
-            [1 => 'True'],
+            [1 => 'Sample answer.'],
             true,
         );
         $attemptobj->process_submitted_actions(time(), false, $postdata);
@@ -1062,7 +1062,7 @@ final class api_test extends externallib_advanced_testcase {
         $sink->close();
 
         // Check that the event count is correct.
-        $this->assertCount(2, $events);
+        $this->assertCount(4, $events);
 
         // Validate the call_to_set_question_attempt_mark_api event.
         $event = $events[0];
@@ -1075,7 +1075,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEventContextNotUsed($event);
 
         // Validate the question_manually_graded event.
-        $event = $events[1];
+        $event = $events[3];
         $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
         $this->assertEquals('question', $event->objecttable);
         $this->assertEquals($qa->get_question_id(), $event->objectid);
@@ -1095,6 +1095,9 @@ final class api_test extends externallib_advanced_testcase {
         $params = ['qaid' => $attemptid, 'markingfield' => '-mark'];
         $qasd = $DB->get_record_sql($sql, $params);
 
+        // Ensure the query result is valid.
+        $this->assertNotFalse($qasd, 'Failed to retrieve the expected question attempt step data.');
+
         // Assert mark in the database.
         $this->assertEquals(1.0, $qasd->value);
 
@@ -1103,6 +1106,106 @@ final class api_test extends externallib_advanced_testcase {
         $qasd = $DB->get_record_sql($sql, $params);
 
         $this->assertEquals('Good job!', $qasd->value);
+    }
+
+    /** Tests the "set_question_attempt_mark" endpoint with just mark, no comment.
+     *
+     * This test creates a course, a quiz module, and a dummy quiz attempt record.
+     * It then calls the API function with only mark being set (no comment) and
+     * verifies that the expected result is returned.
+     */
+    public function test_set_question_attempt_mark_with_no_comment(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+        [$course, $quiz] = $this->create_course_and_quiz();
+        $question = $this->create_question($quiz);
+
+        // Retrieve attempts for the quiz, should come up empty-handed.
+        $result = external_api::clean_returnvalue(
+            api::get_attempts_returns(),
+            api::get_attempts([$quiz->id])
+        );
+        $this->assertEmpty($result);
+
+        // Create a user and enroll them as student in the course.
+        $student = $this->create_student_and_enroll($course);
+
+        // Create a dummy quiz attempt record.
+        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
+
+        // Answer the question
+        // @see /mod/quiz/tests/external/external_test.php for reference.
+        $attemptobj = quiz_attempt::create($attempt->id);
+
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
+            $attemptobj->get_question_usage(),
+            [1 => 'Sample answer.'],
+            true,
+        );
+        $attemptobj->process_submitted_actions(time(), false, $postdata);
+        // Finish the attempt.
+        $attemptobj->process_attempt(time(), true, false, 1);
+
+        // Get the question attempt ID.
+        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
+        $attemptid = $qa->get_database_id();
+
+        // Catch the event.
+        $sink = $this->redirectEvents();
+
+        // Call the API function with valid parameters (no comment).
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($attemptid, 1.0)
+        );
+        // Assert the result.
+        $this->assertEquals(GRADE_UPDATE_OK, $result);
+
+        // Validate the events.
+        $events = $sink->get_events();
+        $sink->close();
+
+        // Check that the event count is correct.
+        $this->assertCount(4, $events);
+
+        // Validate the call_to_set_question_attempt_mark_api event.
+        $event = $events[0];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($attemptid, $event->objectid);
+        $this->assertEquals(\context_system::instance(), $event->get_context());
+        $this->assertEquals('1', $event->other['mark']);
+        $this->assertEventContextNotUsed($event);
+
+        // Validate the question_manually_graded event.
+        $event = $events[3];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($qa->get_question_id(), $event->objectid);
+        $this->assertEquals($course->id, $event->courseid);
+        $this->assertEquals($attemptobj->get_context(), $event->get_context());
+        $this->assertEquals($attempt->quiz, $event->other['quizid']);
+        $this->assertEquals($attempt->id, $event->other['attemptid']);
+        $this->assertEquals($qa->get_slot(), $event->other['slot']);
+        $this->assertEventContextNotUsed($event);
+
+        // Check the database to ensure the mark was set correctly.
+        $sql = 'SELECT qasd.*
+                FROM {question_attempt_steps} qas
+                JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
+                WHERE qas.questionattemptid = :qaid AND qasd.name = :markingfield
+                ORDER BY qas.sequencenumber DESC LIMIT 1';
+        $params = ['qaid' => $attemptid, 'markingfield' => '-mark'];
+        $qasd = $DB->get_record_sql($sql, $params);
+
+        // Ensure the query result is valid.
+        $this->assertNotFalse($qasd, 'Failed to retrieve the expected question attempt step data.');
+
+        // Assert mark in the database.
+        $this->assertEquals(1.0, $qasd->value);
     }
 
     /**
@@ -1389,7 +1492,7 @@ final class api_test extends externallib_advanced_testcase {
     private function create_question($quiz): object {
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
-        $question = $questiongenerator->create_question('truefalse', null, ['category' => $category->id]);
+        $question = $questiongenerator->create_question('essay', null, ['category' => $category->id]);
         quiz_add_quiz_question($question->id, $quiz);
         return $question;
     }

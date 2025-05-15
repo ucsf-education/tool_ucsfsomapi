@@ -778,7 +778,6 @@ class api extends external_api {
                 list($draftitemid, $commenttext) = $commentstep->prepare_response_files_draft_itemid_with_text(
                 'bf_comment', $quizattemptobj->get_quizobj()->get_context()->id, $commenttext);
         } else {
-            $commenttext = '';
             $draftitemid = file_get_unused_draft_itemid();
         }
         $_POST[$prefix."-comment"] = $comment ?? $commenttext;
