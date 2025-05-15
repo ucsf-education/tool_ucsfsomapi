@@ -710,6 +710,8 @@ class api extends external_api {
             'other' => [
                 'mark' => $mark,
                 'comment' => $comment,
+                'GET' => json_encode($_GET, true),
+                'POST' => json_encode($_POST, true),
             ],
         ];
         $event = \tool_ucsfsomapi\event\set_question_attempt_mark_called::create($params);

@@ -21,7 +21,7 @@
  * @copyright  The Regents of the University of California
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-$string['eventquestionattemptmarked'] = 'Question attempt mark (and comment) updated';
-$string['eventsetquestionattemptmarkcalled'] = 'API: set_question_attempt_mark is called';
+$string['eventquestionattemptmarked'] = 'Question attempt graded';
+$string['eventsetquestionattemptmarkcalled'] = 'set_question_attempt_mark called';
 $string['pluginname'] = 'UCSF SOM API';
 $string['privacy:metadata'] = 'The UCSF SOM API plugin returns existing course, quiz, quiz-attempt, and user data.';

@@ -65,8 +65,27 @@ class set_question_attempt_mark_called extends \core\event\base {
      * @return string
      */
     public function get_description() {
-        return "The user with id '$this->userid' called set_question_attempt_mark for the question attempt id " .
-            "'$this->objectid' to set mark to '{$this->other['mark']}' with grader's comment '{$this->other['comment']}'.";
+        global $CFG;
+
+        $description = "The user with id '$this->userid' called set_question_attempt_mark for the question attempt id " .
+                       "'$this->objectid' to set mark to '{$this->other['mark']}'";
+
+        if (!empty($this->other['comment'])) {
+            $description .= " with grader's comment '{$this->other['comment']}'";
+        } else {
+            $description .= " without a comment.";
+        }
+
+        // Only display when debugging is enabled to DEBGUG_DEVELOPER level on the site.
+        if ($CFG->debug > DEBUG_DEVELOPER) {
+            if (!empty($this->other['GET'])) {
+                $description .= "\nGet data: {$this->other['GET']}";
+            }
+            if (!empty($this->other['POST'])) {
+                $description .= "\nPost data: {$this->other['POST']}";
+            }
+        }
+        return $description;
     }
 
     /**
@@ -88,6 +107,6 @@ class set_question_attempt_mark_called extends \core\event\base {
      * @return array{db: string, restore: string}
      */
     public static function get_objectid_mapping() {
-        return ['db' => 'question', 'restore' => 'question'];
+        return ['db' => 'question_attempts', 'restore' => 'question_attempts'];
     }
 }
