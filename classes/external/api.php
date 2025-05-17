@@ -740,7 +740,7 @@ class api extends external_api {
 
         // If $qadata is empty return error or exception.
         if (empty($qadata)) {
-            throw new moodle_exception('invalidquestionid', 'quiz');
+            throw new moodle_exception('invalidattemptid', 'quiz_grading');
         }
 
         $quizattemptid = $qadata->qaid;
