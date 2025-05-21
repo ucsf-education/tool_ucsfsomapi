@@ -27,9 +27,9 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
+- `wstoken` ... your API token
 - `categoryids` ... one or more course category ids
-- `ws-function` ... `tool_ucsfsomapi_get_courses`
+- `wsfunction` ... `tool_ucsfsomapi_get_courses`
 - `moodlewsrestformat` ... `json` or `xml`
 
 **Example:**
@@ -43,9 +43,9 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
+- `wstoken` ... your API token
 - `courseids` ... one or more course ids
-- `ws-function` ... `tool_ucsfsomapi_get_quizzes`
+- `wsfunction` ... `tool_ucsfsomapi_get_quizzes`
 - `moodlewsrestformat` ... `json` or `xml`
 
 **Example:**
@@ -59,9 +59,9 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
+- `wstoken` ... your API token
 - `quizids` ... one or more quiz ids
-- `ws-function` ... `tool_ucsfsomapi_get_questions`
+- `wsfunction` ... `tool_ucsfsomapi_get_questions`
 - `moodlewsrestformat` ... `json` or `xml`
 
 **Example:**
@@ -75,9 +75,9 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
+- `wstoken` ... your API token
 - `quizids` ... one or more quiz ids
-- `ws-function` ... `tool_ucsfsomapi_get_attempts`
+- `wsfunction` ... `tool_ucsfsomapi_get_attempts`
 - `moodlewsrestformat` ... `json` or `xml`
 
 **Example:**
@@ -91,9 +91,9 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
+- `wstoken` ... your API token
 - `userids` ... one or more user ids
-- `ws-function` ... `tool_ucsfsomapi_get_users`
+- `wsfunction` ... `tool_ucsfsomapi_get_users`
 - `moodlewsrestformat` ... `json` or `xml`
 
 **Example:**
@@ -107,8 +107,8 @@ API entry point: https://{your.moodle.site}/webservice/rest/server.php
 
 **Expected input:**
 
-- `ws-token` ... your API token
-- `ws-function` ... `tool_ucsfsomapi_set_question_attempt_mark`
+- `wstoken` ... your API token
+- `wsfunction` ... `tool_ucsfsomapi_set_question_attempt_mark`
 - `moodlewsrestformat` ... `json` or `xml`
 - `attemptid` (Required) ... The question attempt id to set mark (int)
 - `mark` (Required) ... Mark for this question attempt (string)
