@@ -1012,35 +1012,10 @@ final class api_test extends externallib_advanced_testcase {
 
         // Set up the test environment.
         $this->setAdminUser();
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
 
-        // Retrieve attempts for the quiz, should come up empty-handed.
-        $result = external_api::clean_returnvalue(
-            api::get_attempts_returns(),
-            api::get_attempts([$quiz->id])
-        );
-        $this->assertEmpty($result);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $quizattempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $quizattemptobj = quiz_attempt::create($quizattempt->id);
-
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $quizattemptobj->get_question_usage(),
-            [1 => 'Sample answer.'],
-            true,
-        );
-        $quizattemptobj->process_submitted_actions(time(), false, $postdata);
-        // Finish the attempt.
-        $quizattemptobj->process_attempt(time(), true, false, 1);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
 
         // Get the question attempt ID.
         $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
@@ -1119,35 +1094,10 @@ final class api_test extends externallib_advanced_testcase {
 
         // Set up the test environment.
         $this->setAdminUser();
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
 
-        // Retrieve attempts for the quiz, should come up empty-handed.
-        $result = external_api::clean_returnvalue(
-            api::get_attempts_returns(),
-            api::get_attempts([$quiz->id])
-        );
-        $this->assertEmpty($result);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $quizattempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $quizattemptobj = quiz_attempt::create($quizattempt->id);
-
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $quizattemptobj->get_question_usage(),
-            [1 => 'Sample answer.'],
-            true,
-        );
-        $quizattemptobj->process_submitted_actions(time(), false, $postdata);
-        // Finish the attempt.
-        $quizattemptobj->process_attempt(time(), true, false, 1);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
 
         // Get the question attempt ID.
         $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
@@ -1236,38 +1186,13 @@ final class api_test extends externallib_advanced_testcase {
 
         // Set up the test environment.
         $this->setAdminUser();
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
 
-        // Retrieve attempts for the quiz, should come up empty-handed.
-        $result = external_api::clean_returnvalue(
-            api::get_attempts_returns(),
-            api::get_attempts([$quiz->id])
-        );
-        $this->assertEmpty($result);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
-            [1 => 'True'],
-            true,
-        );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
-        // Finish the attempt.
-        $attemptobj->process_attempt(time(), true, false, 1);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
         $attemptid = $qa->get_database_id();
 
         // Call the API function with valid parameters.
@@ -1288,37 +1213,12 @@ final class api_test extends externallib_advanced_testcase {
 
         // Set up the test environment.
         $this->setAdminUser();
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
-
-        // Retrieve attempts for the quiz, should come up empty-handed.
-        $result = external_api::clean_returnvalue(
-            api::get_attempts_returns(),
-            api::get_attempts([$quiz->id])
-        );
-        $this->assertEmpty($result);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
-            [1 => 'True'],
-            true,
-        );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
-        // Finish the attempt.
-        $attemptobj->process_attempt(time(), true, false, 1);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
         $attemptid = $qa->get_database_id();
 
         // Call the method with an invalid comment.
@@ -1344,32 +1244,15 @@ final class api_test extends externallib_advanced_testcase {
     public function test_set_question_attempt_mark_unfinished_attempt(): void {
         global $DB;
 
-        $this->resetAfterTest(true);
+        // Set up the test environment.
+        $this->setAdminUser();
 
-        // Create a mock quiz attempt and question attempt.
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
-            [1 => 'True'],
-            true,
-        );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, false);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
         $attemptid = $qa->get_database_id();
 
         $this->expectException(\moodle_exception::class);
@@ -1388,45 +1271,15 @@ final class api_test extends externallib_advanced_testcase {
     public function test_set_question_attempt_mark_missing_quiz_grade_capability(): void {
         global $DB;
 
-        $this->resetAfterTest(true);
-
         // Set up the test environment.
         $this->setAdminUser();
 
-        // Create a mock quiz attempt and question attempt.
-        [$course, $quiz] = $this->create_course_and_quiz();
-        $question = $this->create_question($quiz);
-
-        // Retrieve attempts for the quiz, should come up empty-handed.
-        $result = external_api::clean_returnvalue(
-            api::get_attempts_returns(),
-            api::get_attempts([$quiz->id])
-        );
-        $this->assertEmpty($result);
-
-        // Create a user and enroll them as student in the course.
-        $student = $this->create_student_and_enroll($course);
-
-        // Create a dummy quiz attempt record.
-        $attempt = $this->create_and_start_quiz_attempt($quiz, $student);
-
-        // Answer the question
-        // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptobj = quiz_attempt::create($attempt->id);
-
-        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
-            $attemptobj->get_question_usage(),
-            [1 => 'True'],
-            true,
-        );
-        $attemptobj->process_submitted_actions(time(), false, $postdata);
-
-        // Finish the attempt.
-        $attemptobj->process_attempt(time(), true, false, 1);
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
 
         // Get the question attempt ID.
-        $qa = $attemptobj->get_question_usage()->get_question_attempt(1);
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
         $attemptid = $qa->get_database_id();
 
         // Create a user and attempt to set a mark without proper permissions.
@@ -1463,69 +1316,106 @@ final class api_test extends externallib_advanced_testcase {
     }
 
     /**
-     * Helper methods for common setup tasks.
-     */
-
-    /**
-     * Create a course and a quiz module.
+     * Create a course with a quiz with questions including a started or finished attempt optionally
      *
-     * @return array The created course and quiz objects.
+     * @param  boolean $startattempt whether to start a new attempt
+     * @param  boolean $finishattempt whether to finish the new attempt
+     * @param  string $behaviour the quiz preferredbehaviour, defaults to 'deferredfeedback'.
+     * @param  boolean $includeqattachments whether to include a question that supports attachments, defaults to false.
+     * @param  array $extraoptions extra options for Quiz.
+     * @return array array containing the course, quiz, context and the attempt
      */
-    private function create_course_and_quiz(): array {
+    private function create_course_with_quiz_with_questions(
+        $startattempt = false,
+        $finishattempt = false,
+        $behaviour = 'deferredfeedback',
+            $includeqattachments = false, $extraoptions = []) {
+        global $DB;
 
         // Create a course.
         $course = $this->getDataGenerator()->create_course();
+
+        // Create a new quiz with attempts.
+        $data = ['course' => $course->id,
+                    'sumgrades' => 2,
+                    'preferredbehaviour' => $behaviour,
+                ];
+        $data = array_merge($data, $extraoptions);
+        $quiz = $this->getDataGenerator()->create_module('quiz', $data);
+
         // Get a hold of the quiz module contexts.
-        $quiz = $this->getDataGenerator()->create_module(
-            'quiz',
-            ['course' => $course->id, 'name' => 'Sample Quiz', 'sumgrades' => 1]
-        );
+        $cm = get_coursemodule_from_instance('quiz', $quiz->id);
+        $context = context_module::instance($cm->id);
 
-        return [$course, $quiz];
-    }
+        external_api::validate_context($context);
 
-    /**
-     * Create a quiz question and add it to the quiz.
-     *
-     * @param object $quiz The quiz object.
-     * @return object The created question object.
-     */
-    private function create_question($quiz): object {
+        // Create a couple of questions.
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
-        $category = $questiongenerator->create_question_category();
-        $question = $questiongenerator->create_question('essay', null, ['category' => $category->id]);
-        quiz_add_quiz_question($question->id, $quiz);
-        return $question;
-    }
 
-    /**
-     * Create a student and enroll them in the course.
-     *
-     * @param object $course The course object.
-     * @return object The created student object.
-     */
-    private function create_student_and_enroll($course): object {
+        $cat = $questiongenerator->create_question_category();
+
+        $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($question->id, $quiz);
+
+        $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($question->id, $quiz);
+
+        if ($includeqattachments) {
+            $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id, 'attachments' => 1,
+                'attachmentsrequired' => 1]);
+            quiz_add_quiz_question($question->id, $quiz);
+        }
+
+        // Create a user and enroll them as student in the course.
+        $student = $this->getDataGenerator()->create_user();
+        $teacher = $this->getDataGenerator()->create_user();
+
+        $studentrole = $DB->get_record('role', ['shortname' => 'student']);
+        $teacherrole = $DB->get_record('role', ['shortname' => 'editingteacher']);
+
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, $studentrole->id, 'manual');
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, $teacherrole->id, 'manual');
+
         $student = $this->getDataGenerator()->create_user();
         $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
-        return $student;
-    }
 
-    /**
-     * Create and start a quiz attempt for a given student.
-     *
-     * @param object $quiz The quiz object.
-     * @param object $student The student object.
-     * @return object The created quiz attempt.
-     */
-    private function create_and_start_quiz_attempt($quiz, $student): object {
-        $quizsettings = quiz_settings::create($quiz->id, $student->id);
-        $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizsettings->get_context());
-        $quba->set_preferred_behaviour($quizsettings->get_quiz()->preferredbehaviour);
-        $attemptnumber = count(quiz_get_user_attempts($quizsettings->get_quizid(), $student->id)) + 1;
-        $attempt = quiz_create_attempt($quizsettings, $attemptnumber, false, time(), false, $student->id);
-        quiz_start_new_attempt($quizsettings, $quba, $attempt, 1, time());
-        quiz_attempt_save_started($quizsettings, $quba, $attempt);
+        // Create a quiz settings object for the student.
+        $quizobj = quiz_settings::create($quiz->id, $student->id);
 
-        return $attempt;
+        // Set grade to pass.
+        $item = \grade_item::fetch(['courseid' => $course->id, 'itemtype' => 'mod',
+                                        'itemmodule' => 'quiz', 'iteminstance' => $quiz->id, 'outcomeid' => null]);
+        $item->gradepass = 80;
+        $item->update();
+
+        if ($startattempt || $finishattempt) {
+            // Now, do one attempt.
+            $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+            $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
+
+            $timenow = time();
+            $attemptnumber = count(quiz_get_user_attempts($quizobj->get_quizid(), $student->id)) + 1;
+            $attempt = quiz_create_attempt($quizobj, $attemptnumber, false, $timenow, false, $student->id);
+            quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
+            quiz_attempt_save_started($quizobj, $quba, $attempt);
+            $attemptobj = quiz_attempt::create($attempt->id);
+
+            if ($finishattempt) {
+                // Process some responses from the student.
+                $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
+                    $quba,
+                    [1 => 'Sample answer.'],
+                    true,
+                );
+                $attemptobj->process_submitted_actions(time(), false, $postdata);
+
+                // Finish the attempt.
+                $attemptobj->process_finish(time(), false);
+            }
+            return [$course, $quiz, $context, $quizobj, $attempt, $attemptobj, $quba];
+        } else {
+            return [$course, $quiz, $context, $quizobj];
+        }
+
     }
 }
