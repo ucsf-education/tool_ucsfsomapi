@@ -705,13 +705,30 @@ class api extends external_api {
         require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
         // Log this API call.
+        $getdata = $_GET;
+        $postdata = $_POST;
+
+        // Mask the wstoken in the post data for security reasons.
+        if (isset($getdata['wstoken'])) {
+            $wstoken = $getdata['wstoken'];
+            $getdata['wstoken'] = substr($wstoken, 0, 1)
+                                    . str_repeat('*', 5)
+                                    . substr($wstoken, -4);
+        }
+        if (isset($postdata['wstoken'])) {
+            $wstoken = $postdata['wstoken'];
+            $postdata['wstoken'] = substr($wstoken, 0, 1)
+                                    . str_repeat('*', 5)
+                                    . substr($wstoken, -4);
+        }
+
         $params = [
             'objectid' => $questionattemptid,
             'other' => [
                 'mark' => $mark,
                 'comment' => $comment,
-                'GET' => json_encode($_GET, true),
-                'POST' => json_encode($_POST, true),
+                'GET' => json_encode($getdata, true),
+                'POST' => json_encode($postdata, true),
             ],
         ];
         $event = \tool_ucsfsomapi\event\set_question_attempt_mark_called::create($params);

@@ -1023,6 +1023,12 @@ final class api_test extends externallib_advanced_testcase {
         // Catch the event.
         $sink = $this->redirectEvents();
 
+        // Enter some dummy data in $_GET and $_POST to confirm they are captured in the events.
+        $_GET['data'] = 'GET test data';
+        $_GET['wstoken'] = '0123456789';
+        $_POST['data'] = 'POST test data';
+        $_POST['wstoken'] = '1234567890';
+
         // Call the API function with valid parameters.
         $result = external_api::clean_returnvalue(
             api::set_question_attempt_mark_returns(),
@@ -1038,7 +1044,7 @@ final class api_test extends externallib_advanced_testcase {
         // Check that the event count is correct.
         $this->assertCount(4, $events);
 
-        // Validate the call_to_set_question_attempt_mark_api event.
+        // Validate the set_question_attempt_mark_called event.
         $event = $events[0];
         $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
         $this->assertEquals('question', $event->objecttable);
@@ -1046,9 +1052,11 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals(\context_system::instance(), $event->get_context());
         $this->assertEquals('1', $event->other['mark']);
         $this->assertEquals('Good job!', $event->other['comment']);
+        $this->assertEquals('{"data":"GET test data","wstoken":"0*****6789"}', $event->other['GET']);
+        $this->assertEquals('{"data":"POST test data","wstoken":"1*****7890"}', $event->other['POST']);
         $this->assertEventContextNotUsed($event);
 
-        // Validate the question_manually_graded event.
+        // Validate the question_attempt_marked event.
         $event = $events[3];
         $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
         $this->assertEquals('question', $event->objecttable);

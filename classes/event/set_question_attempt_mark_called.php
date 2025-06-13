@@ -77,7 +77,7 @@ class set_question_attempt_mark_called extends \core\event\base {
         }
 
         // Only display when debugging is enabled to DEBGUG_DEVELOPER level on the site.
-        if ($CFG->debug > DEBUG_DEVELOPER) {
+        if ($CFG->debug === DEBUG_DEVELOPER) {
             if (!empty($this->other['GET'])) {
                 $description .= "\nGet data: {$this->other['GET']}";
             }
