@@ -24,6 +24,7 @@
 
 namespace tool_ucsfsomapi;
 
+use assign;
 use context_module;
 use core_external\external_api;
 use core_external\external_multiple_structure;
@@ -845,9 +846,17 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($timefinish1, $rhett[0]['timefinish']);
         $this->assertCount(2, $rhett[0]['questions']);
         $this->assertEquals($question1->id, $rhett[0]['questions'][0]['id']);
+        $this->assertEquals(
+            $attemptobj1->get_question_usage()->get_question_attempt(1)->get_database_id(),
+            $rhett[0]['questions'][0]['attemptid']
+        );
         $this->assertEquals(1.0, $rhett[0]['questions'][0]['mark']); // Correct answer.
         $this->assertEquals($answers1[1], $rhett[0]['questions'][0]['answer']);
         $this->assertEquals($question2->id, $rhett[0]['questions'][1]['id']);
+        $this->assertEquals(
+            $attemptobj1->get_question_usage()->get_question_attempt(2)->get_database_id(),
+            $rhett[0]['questions'][1]['attemptid']
+        );
         $this->assertEquals(0.0, $rhett[0]['questions'][1]['mark']); // Wrong answer.
         $this->assertEquals($answers1[2], $rhett[0]['questions'][1]['answer']);
 
@@ -858,9 +867,17 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($timefinish2, $rhett[1]['timefinish']);
         $this->assertCount(2, $rhett[1]['questions']);
         $this->assertEquals($question1->id, $rhett[1]['questions'][0]['id']);
+        $this->assertEquals(
+            $attemptobj2->get_question_usage()->get_question_attempt(1)->get_database_id(),
+            $rhett[1]['questions'][0]['attemptid']
+        );
         $this->assertEquals(0.0, $rhett[1]['questions'][0]['mark']); // Wrong answer.
         $this->assertEquals($answers2[1], $rhett[1]['questions'][0]['answer']);
         $this->assertEquals($question2->id, $rhett[1]['questions'][1]['id']);
+        $this->assertEquals(
+            $attemptobj2->get_question_usage()->get_question_attempt(2)->get_database_id(),
+            $rhett[1]['questions'][1]['attemptid']
+        );
         $this->assertEquals(1.0, $rhett[1]['questions'][1]['mark']); // Correct answer.
         $this->assertEquals($answers2[2], $rhett[1]['questions'][1]['answer']);
     }
@@ -934,5 +951,479 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($user1->idnumber, $rhett[0]['ucid']);
         $this->assertEquals($user2->id, $rhett[1]['id']);
         $this->assertEquals($user2->idnumber, $rhett[1]['ucid']);
+    }
+
+    /**
+     * Tests the input parameters definition for the "set_question_attempt_mark" endpoint.
+     */
+    public function test_set_question_attempt_mark_parameters(): void {
+        // Retrieve the parameter structure defined by the API.
+        $structure = api::set_question_attempt_mark_parameters();
+
+        // We expect three keys: attemptid, mark, and comment.
+        $this->assertCount(3, $structure->keys, 'Expected 3 keys in the parameters structure.');
+
+        // Validate "attemptid" key.
+        $attemptid = $structure->keys['attemptid'];
+        $this->assertInstanceOf(external_value::class, $attemptid);
+        $this->assertEquals(PARAM_INT, $attemptid->type, 'attemptid should be of type PARAM_INT.');
+        $this->assertEquals('The question attempt id to set mark.', $attemptid->desc);
+        // Value is required by default.
+        $this->assertEquals(VALUE_REQUIRED, $attemptid->required);
+
+        // Validate "mark" key.
+        $mark = $structure->keys['mark'];
+        $this->assertInstanceOf(external_value::class, $mark);
+        $this->assertEquals(PARAM_TEXT, $mark->type, 'mark should be of type PARAM_TEXT.');
+        $this->assertEquals('Mark for this question attempt.', $mark->desc);
+        $this->assertEquals(VALUE_REQUIRED, $mark->required);
+
+        // Validate "comment" key.
+        $comment = $structure->keys['comment'];
+        $this->assertInstanceOf(external_value::class, $comment);
+        $this->assertEquals(PARAM_RAW, $comment->type, 'comment should be of type PARAM_RAW.');
+        $this->assertEquals("Grader's comment for this question attempt (optional)", $comment->desc);
+        // Check that the "comment" is optional.
+        $this->assertEquals(VALUE_DEFAULT, $comment->required, 'comment should be an optional parameter.');
+    }
+
+    /**
+     * Tests the return value definition for the "set_question_attempt_mark" endpoint.
+     */
+    public function test_set_question_attempt_mark_returns(): void {
+        // Retrieve the return value structure defined by the API.
+        $result = api::set_question_attempt_mark_returns();
+
+        $this->assertEquals(PARAM_INT, $result->type, 'result should be of type PARAM_INT.');
+        $this->assertEquals('A value like 0 => OK, 1 => FAILED as defined in lib/grade/constants.php', $result->desc);
+        // Check that the "result" is required.
+        $this->assertEquals(VALUE_REQUIRED, $result->required, 'result should be a required parameter.');
+    }
+
+    /**
+     * Tests the "set_question_attempt_mark" endpoint.
+     *
+     * This test creates a course, a quiz module, and a dummy quiz attempt record.
+     * It then calls the API function with valid parameters and verifies that
+     * the expected result is returned.
+     */
+    public function test_set_question_attempt_mark(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $questionattemptid = $qa->get_database_id();
+
+        // Catch the event.
+        $sink = $this->redirectEvents();
+
+        // Enter some dummy data in $_GET and $_POST to confirm they are captured in the events.
+        $_GET['data'] = 'GET test data';
+        $_GET['wstoken'] = '0123456789';
+        $_POST['data'] = 'POST test data';
+        $_POST['wstoken'] = '1234567890';
+
+        // Call the API function with valid parameters.
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($questionattemptid, 1.0, 'Good job!')
+        );
+        // Assert the result.
+        $this->assertEquals(GRADE_UPDATE_OK, $result);
+
+        // Validate the events.
+        $events = $sink->get_events();
+        $sink->close();
+
+        // Check that the event count is correct.
+        $this->assertCount(4, $events);
+
+        // Validate the set_question_attempt_mark_called event.
+        $event = $events[0];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($questionattemptid, $event->objectid);
+        $this->assertEquals(\context_system::instance(), $event->get_context());
+        $this->assertEquals('1', $event->other['mark']);
+        $this->assertEquals('Good job!', $event->other['comment']);
+        $this->assertEquals('{"data":"GET test data","wstoken":"0*****6789"}', $event->other['GET']);
+        $this->assertEquals('{"data":"POST test data","wstoken":"1*****7890"}', $event->other['POST']);
+        $this->assertEventContextNotUsed($event);
+
+        // Validate the question_attempt_marked event.
+        $event = $events[3];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($qa->get_question_id(), $event->objectid);
+        $this->assertEquals($course->id, $event->courseid);
+        $this->assertEquals($quizattemptobj->get_context(), $event->get_context());
+        $this->assertEquals($quizattempt->quiz, $event->other['quizid']);
+        $this->assertEquals($quizattempt->id, $event->other['attemptid']);
+        $this->assertEquals($qa->get_slot(), $event->other['slot']);
+        $this->assertEventContextNotUsed($event);
+
+        // Check the database to ensure the mark was set correctly.
+        $sql = 'SELECT qasd.*
+                FROM {question_attempt_steps} qas
+                JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
+                WHERE qas.questionattemptid = :qaid AND qasd.name = :markingfield
+                ORDER BY qas.sequencenumber DESC LIMIT 1';
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-mark'];
+        $qasd = $DB->get_record_sql($sql, $params);
+
+        // Ensure the query result is valid.
+        $this->assertNotFalse($qasd, 'Failed to retrieve the expected question attempt step data.');
+
+        // Assert mark in the database.
+        $this->assertEquals(1.0, $qasd->value);
+
+        // Assert comment in the database.
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-comment'];
+        $qasd = $DB->get_record_sql($sql, $params);
+
+        $this->assertEquals('Good job!', $qasd->value);
+    }
+
+    /** Tests the "set_question_attempt_mark" endpoint with just mark, no comment.
+     *
+     * This test creates a course, a quiz module, and a dummy quiz attempt record.
+     * It then calls the API function with only mark being set (no comment) and
+     * verifies that the expected result is returned.
+     */
+    public function test_set_question_attempt_mark_with_no_comment(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $questionattemptid = $qa->get_database_id();
+
+        // Catch the event.
+        $sink = $this->redirectEvents();
+
+        // Call the API function with valid parameters (no comment).
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($questionattemptid, 1.0)
+        );
+        // Assert the result.
+        $this->assertEquals(GRADE_UPDATE_OK, $result);
+
+        // Validate the events.
+        $events = $sink->get_events();
+        $sink->close();
+
+        // Check that the event count is correct.
+        $this->assertCount(4, $events);
+
+        // Validate the call_to_set_question_attempt_mark_api event.
+        $event = $events[0];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\set_question_attempt_mark_called', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($questionattemptid, $event->objectid);
+        $this->assertEquals(\context_system::instance(), $event->get_context());
+        $this->assertEquals('1', $event->other['mark']);
+        $this->assertNotContains('comment', $event->other);
+        $this->assertEventContextNotUsed($event);
+
+        // Validate the question_manually_graded event.
+        $event = $events[3];
+        $this->assertInstanceOf('\tool_ucsfsomapi\event\question_attempt_marked', $event);
+        $this->assertEquals('question', $event->objecttable);
+        $this->assertEquals($qa->get_question_id(), $event->objectid);
+        $this->assertEquals($course->id, $event->courseid);
+        $this->assertEquals($quizattemptobj->get_context(), $event->get_context());
+        $this->assertEquals($quizattempt->quiz, $event->other['quizid']);
+        $this->assertEquals($quizattempt->id, $event->other['attemptid']);
+        $this->assertEquals($qa->get_slot(), $event->other['slot']);
+        $this->assertEventContextNotUsed($event);
+
+        // Check the database to ensure the mark was set correctly.
+        $sql = 'SELECT qasd.*
+                FROM {question_attempt_steps} qas
+                JOIN {question_attempt_step_data} qasd ON qasd.attemptstepid = qas.id
+                WHERE qas.questionattemptid = :qaid AND qasd.name = :markingfield
+                ORDER BY qas.sequencenumber DESC LIMIT 1';
+        $params = ['qaid' => $questionattemptid, 'markingfield' => '-mark'];
+        $qasd = $DB->get_record_sql($sql, $params);
+
+        // Ensure the query result is valid.
+        $this->assertNotFalse($qasd, 'Failed to retrieve the expected question attempt step data.');
+
+        // Assert mark in the database.
+        $this->assertEquals(1.0, $qasd->value);
+    }
+
+    /**
+     * Tests an invalid execution of the "set_question_attempt_mark" endpoint.
+     *
+     * This test creates a course, a quiz module, and a dummy quiz attempt record.
+     * It then calls the API function with an invalid attempt ID and verifies that
+     * the expected exception is thrown.
+     */
+    public function test_set_question_attempt_mark_invalid_attemptid(): void {
+        global $DB;
+
+        // Expect an exception when calling the API with an invalid attempt ID.
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage('No such attempt ID exists');
+
+        // Call the method with an invalid attempt ID.
+        api::set_question_attempt_mark(0, '1.0', 'Invalid attempt');
+        api::set_question_attempt_mark(99999, 1.0, 'Invalid attempt');
+    }
+
+    /**
+     * Test set_question_attempt_mark with invalid mark.
+     */
+    public function test_set_question_attempt_mark_invalid_mark(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $attemptid = $qa->get_database_id();
+
+        // Call the API function with valid parameters.
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($attemptid, 'invalid_mark', 'Invalid mark')
+        );
+
+        // Assert the result.
+        $this->assertEquals(GRADE_UPDATE_FAILED, $result);
+    }
+
+    /**
+     * Test set_question_attempt_mark with invalid comment.
+     */
+    public function test_set_question_attempt_mark_invalid_comment(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $attemptid = $qa->get_database_id();
+
+        // Call the method with an invalid comment.
+        $invalidcomment = "\0Invalid\0Comment";
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage(
+            'Invalid parameter value detected (Invalid external api parameter: '
+            .'the value is "' . $invalidcomment . '", the server was expecting "raw" type): '
+            .'Invalid external api parameter: the value is "' . $invalidcomment . '", '
+            .'the server was expecting "raw" type'
+        );
+
+        // Call the API function with valid parameters.
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($attemptid, '1.0', $invalidcomment)
+        );
+    }
+
+    /**
+     * Test set_question_attempt_mark with unfinished attempt.
+     */
+    public function test_set_question_attempt_mark_unfinished_attempt(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, false);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $attemptid = $qa->get_database_id();
+
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage('Attempt has not closed yet');
+
+        // Call the method with an unfinished attempt.
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($attemptid, 1.0, 'Good job!')
+        );
+    }
+
+    /**
+     * Test set_question_attempt_mark with missing 'mod/quiz:grade' capability.
+     */
+    public function test_set_question_attempt_mark_missing_quiz_grade_capability(): void {
+        global $DB;
+
+        // Set up the test environment.
+        $this->setAdminUser();
+
+        // Create a course, a quiz module, and a dummy quiz attempt record.
+        [$course, $quiz, $context, $quizobj, $quizattempt, $quizattemptobj, $quba]
+            = $this->create_course_with_quiz_with_questions(true, true);
+
+        // Get the question attempt ID.
+        $qa = $quizattemptobj->get_question_usage()->get_question_attempt(1);
+        $attemptid = $qa->get_database_id();
+
+        // Create a user and attempt to set a mark without proper permissions.
+        $grader = $this->getDataGenerator()->create_user();
+        $graderrole = $DB->get_record('role', ['shortname' => 'teacher']);
+        $this->getDataGenerator()->enrol_user($grader->id, $course->id, $graderrole->id);
+
+        $this->setUser($grader);
+
+        // Obtain the course module ID.
+        $cm = get_coursemodule_from_instance('quiz', $quiz->id, $course->id);
+        $cmid = $cm->id;
+        // Set the context for the quiz module.
+        $context = context_module::instance($cmid);
+
+        // Check that the user has the "mod/quiz:grade" capability.
+        $this->assertTrue(has_capability('mod/quiz:grade', $context, $grader->id));
+
+        // Remove grading capability.
+        assign_capability('mod/quiz:grade', CAP_PROHIBIT, $graderrole->id, $context->id);
+
+        // Check that the user no longer has the "mod/quiz:grade" capability.
+        $this->assertFalse(has_capability('mod/quiz:grade', $context, $grader->id));
+
+        // Expect an exception when calling the API with missing permissions.
+        $this->expectException(\moodle_exception::class);
+        $this->expectExceptionMessage('Sorry, but you do not currently have permissions to do that (Grade quizzes manually).');
+
+        // Call the method without proper permissions.
+        $result = external_api::clean_returnvalue(
+            api::set_question_attempt_mark_returns(),
+            api::set_question_attempt_mark($attemptid, '1.0', 'No permissions')
+        );
+    }
+
+    /**
+     * Create a course with a quiz with questions including a started or finished attempt optionally
+     *
+     * @param  boolean $startattempt whether to start a new attempt
+     * @param  boolean $finishattempt whether to finish the new attempt
+     * @param  string $behaviour the quiz preferredbehaviour, defaults to 'deferredfeedback'.
+     * @param  boolean $includeqattachments whether to include a question that supports attachments, defaults to false.
+     * @param  array $extraoptions extra options for Quiz.
+     * @return array array containing the course, quiz, context and the attempt
+     */
+    private function create_course_with_quiz_with_questions(
+        $startattempt = false,
+        $finishattempt = false,
+        $behaviour = 'deferredfeedback',
+            $includeqattachments = false, $extraoptions = []) {
+        global $DB;
+
+        // Create a course.
+        $course = $this->getDataGenerator()->create_course();
+
+        // Create a new quiz with attempts.
+        $data = ['course' => $course->id,
+                    'sumgrades' => 2,
+                    'preferredbehaviour' => $behaviour,
+                ];
+        $data = array_merge($data, $extraoptions);
+        $quiz = $this->getDataGenerator()->create_module('quiz', $data);
+
+        // Get a hold of the quiz module contexts.
+        $cm = get_coursemodule_from_instance('quiz', $quiz->id);
+        $context = context_module::instance($cm->id);
+
+        external_api::validate_context($context);
+
+        // Create a couple of questions.
+        $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
+
+        $cat = $questiongenerator->create_question_category();
+
+        $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($question->id, $quiz);
+
+        $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id]);
+        quiz_add_quiz_question($question->id, $quiz);
+
+        if ($includeqattachments) {
+            $question = $questiongenerator->create_question('essay', null, ['category' => $cat->id, 'attachments' => 1,
+                'attachmentsrequired' => 1]);
+            quiz_add_quiz_question($question->id, $quiz);
+        }
+
+        // Create a user and enroll them as student in the course.
+        $student = $this->getDataGenerator()->create_user();
+        $teacher = $this->getDataGenerator()->create_user();
+
+        $studentrole = $DB->get_record('role', ['shortname' => 'student']);
+        $teacherrole = $DB->get_record('role', ['shortname' => 'editingteacher']);
+
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, $studentrole->id, 'manual');
+        $this->getDataGenerator()->enrol_user($teacher->id, $course->id, $teacherrole->id, 'manual');
+
+        $student = $this->getDataGenerator()->create_user();
+        $this->getDataGenerator()->enrol_user($student->id, $course->id, 'student');
+
+        // Create a quiz settings object for the student.
+        $quizobj = quiz_settings::create($quiz->id, $student->id);
+
+        // Set grade to pass.
+        $item = \grade_item::fetch(['courseid' => $course->id, 'itemtype' => 'mod',
+                                        'itemmodule' => 'quiz', 'iteminstance' => $quiz->id, 'outcomeid' => null]);
+        $item->gradepass = 80;
+        $item->update();
+
+        if ($startattempt || $finishattempt) {
+            // Now, do one attempt.
+            $quba = \question_engine::make_questions_usage_by_activity('mod_quiz', $quizobj->get_context());
+            $quba->set_preferred_behaviour($quizobj->get_quiz()->preferredbehaviour);
+
+            $timenow = time();
+            $attemptnumber = count(quiz_get_user_attempts($quizobj->get_quizid(), $student->id)) + 1;
+            $attempt = quiz_create_attempt($quizobj, $attemptnumber, false, $timenow, false, $student->id);
+            quiz_start_new_attempt($quizobj, $quba, $attempt, 1, $timenow);
+            quiz_attempt_save_started($quizobj, $quba, $attempt);
+            $attemptobj = quiz_attempt::create($attempt->id);
+
+            if ($finishattempt) {
+                // Process some responses from the student.
+                $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
+                    $quba,
+                    [1 => 'Sample answer.'],
+                    true,
+                );
+                $attemptobj->process_submitted_actions(time(), false, $postdata);
+
+                // Finish the attempt.
+                $attemptobj->process_finish(time(), false);
+            }
+            return [$course, $quiz, $context, $quizobj, $attempt, $attemptobj, $quba];
+        } else {
+            return [$course, $quiz, $context, $quizobj];
+        }
+
     }
 }

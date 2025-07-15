@@ -498,6 +498,7 @@ class api extends external_api {
                     $questionattempt = $quba->get_question_attempt($slot);
                     $ret['questions'][] = [
                         'id' => $questionattempt->get_question_id(),
+                        'attemptid' => $questionattempt->get_database_id(),
                         'mark' => $questionattempt->get_mark(),
                         'answer' => util::format_string($questionattempt->get_response_summary(), $context),
                     ];
@@ -541,6 +542,7 @@ class api extends external_api {
                 'questions' => new external_multiple_structure(
                     new external_single_structure([
                         'id' => new external_value(PARAM_INT, 'Question ID', VALUE_REQUIRED),
+                        'attemptid' => new external_value(PARAM_INT, 'Question attempt ID', VALUE_REQUIRED),
                         'mark' => new external_value(PARAM_FLOAT, 'Mark received', VALUE_REQUIRED),
                         'answer' => new external_value(PARAM_RAW, 'Answer given', VALUE_REQUIRED),
                     ]),
@@ -665,6 +667,183 @@ class api extends external_api {
             "questionbankentryid $sql",
             $sqlparams,
             'id'
+        );
+    }
+
+    /**
+     * Defines the input parameters for the tool_ucsfsomapi_set_question_attempt_mark web service endpoint.
+     *
+     * @return external_function_parameters The parameter definition.
+     */
+    public static function set_question_attempt_mark_parameters(): external_function_parameters {
+        return new external_function_parameters(
+            [
+                'attemptid' => new external_value(PARAM_INT, 'The question attempt id to set mark.'),
+                'mark' => new external_value(PARAM_TEXT, 'Mark for this question attempt.'),
+                'comment'  => new external_value(PARAM_RAW,
+                    'Grader\'s comment for this question attempt (optional)',
+                    VALUE_DEFAULT
+                ),
+             ]
+        );
+    }
+
+    /**
+     * Implements the set_question_attempt_mark web service endpoint.
+     * Reference: mod/quiz/comment.php.
+     *
+     * @param int $questionattemptid The question attempt ID.
+     * @param string $mark The mark for this question attempt.
+     * @param string|null $comment The comment for this question attempt (use null for new comment).
+     * @return int A status flag
+     * @throws moodle_exception
+     * @throws invalid_parameter_exception
+     */
+    public static function set_question_attempt_mark(int $questionattemptid, string $mark, $comment = null): int {
+        global $USER, $DB, $CFG;
+        require_once($CFG->dirroot . '/lib/grade/constants.php');
+        require_once($CFG->dirroot . '/mod/quiz/locallib.php');
+
+        // Log this API call.
+        $getdata = $_GET;
+        $postdata = $_POST;
+
+        // Mask the wstoken in the post data for security reasons.
+        if (isset($getdata['wstoken'])) {
+            $wstoken = $getdata['wstoken'];
+            $getdata['wstoken'] = substr($wstoken, 0, 1)
+                                    . str_repeat('*', 5)
+                                    . substr($wstoken, -4);
+        }
+        if (isset($postdata['wstoken'])) {
+            $wstoken = $postdata['wstoken'];
+            $postdata['wstoken'] = substr($wstoken, 0, 1)
+                                    . str_repeat('*', 5)
+                                    . substr($wstoken, -4);
+        }
+
+        $params = [
+            'objectid' => $questionattemptid,
+            'other' => [
+                'mark' => $mark,
+                'comment' => $comment,
+                'GET' => json_encode($getdata, true),
+                'POST' => json_encode($postdata, true),
+            ],
+        ];
+        $event = \tool_ucsfsomapi\event\set_question_attempt_mark_called::create($params);
+        $event->trigger();
+
+        $params = [
+            'attemptid' => $questionattemptid,
+            'mark' => $mark,
+            'comment' => $comment,
+        ];
+        $params = self::validate_parameters(self::set_question_attempt_mark_parameters(), $params);
+
+        // Prevent functions like file_get_submitted_draft_itemid() or form library requiring a sesskey for WS requests.
+        if (WS_SERVER || PHPUNIT_TEST) {
+            $USER->ignoresesskey = true;
+        }
+
+        // Find the quiz attempt id and the slot from question attempt id.
+        $sql = 'SELECT  qa.id as qaid,
+                        qqa.id as qqaid,
+                        qqa.slot as slot
+                FROM {quiz_attempts} qa
+                JOIN {question_attempts} qqa ON qa.uniqueid = qqa.questionusageid
+                WHERE qqa.id = ?;';
+        $qadata = $DB->get_record_sql($sql, [$questionattemptid]);
+
+        // If $qadata is empty return error or exception.
+        if (empty($qadata)) {
+            throw new moodle_exception('invalidattemptid', 'quiz_grading');
+        }
+
+        $quizattemptid = $qadata->qaid;
+        $slot = $qadata->slot;
+
+        $quizattemptobj = quiz_create_attempt_handling_errors($quizattemptid);
+        $quizattemptobj->preload_all_attempt_step_users();
+
+        // Can only grade finished attempts.
+        if (!$quizattemptobj->is_finished()) {
+            throw new moodle_exception('attemptclosed', 'quiz');
+        }
+
+        // Check login and permissions.
+        require_login($quizattemptobj->get_course(), false, $quizattemptobj->get_cm());
+        $quizattemptobj->require_capability('mod/quiz:grade');
+
+        // Set $_POST data.
+        $qa = $quizattemptobj->get_question_attempt($slot);
+        $prefix = $qa->get_field_prefix();
+
+        // Set the sequence check count to the latest value.
+        $_POST[$prefix.":sequencecheck"] = $qa->get_sequence_check_count();
+
+        $_POST["attempt"] = (string) $quizattemptid;
+        $_POST["slot"] = (string) $slot;
+        $_POST["slots"] = (string) $slot;      // This is set to $slot in /mod/quiz/comment.php, line 122 (is this a bug?).
+        $_POST[$prefix."-mark"] = (string) $mark;
+        $_POST[$prefix."-maxmark"] = $qa->get_max_mark();
+        $_POST[$prefix.":minfraction"] = $qa->get_min_fraction();
+        $_POST[$prefix.":maxfraction"] = $qa->get_max_fraction();
+
+        // Set the comment text and format.
+        // See if there is a comment already.
+        list($commenttext, $commentformat, $commentstep) = $qa->get_current_manual_comment();
+        if (!empty($commentstep)) {
+                list($draftitemid, $commenttext) = $commentstep->prepare_response_files_draft_itemid_with_text(
+                'bf_comment', $quizattemptobj->get_quizobj()->get_context()->id, $commenttext);
+        } else {
+            $draftitemid = file_get_unused_draft_itemid();
+        }
+        $_POST[$prefix."-comment"] = $comment ?? $commenttext;
+        $_POST[$prefix."-commentformat"] = $commentformat;  // Consider to use FORMAT_PLAIN, 2 (See lib/weblib.php L54).
+        $_POST[$prefix."-comment:itemid"] = $draftitemid;
+        // This needs to be in $_REQUEST as well for the file picker to work. (ref. lib/filelib.php L881).
+        $_REQUEST[$prefix."-comment:itemid"] = $draftitemid;
+
+        // Process any data that was submitted.
+        if (question_engine::is_manual_grade_in_range($quizattemptobj->get_uniqueid(), $slot)) {
+            $transaction = $DB->start_delegated_transaction();
+            $quizattemptobj->process_submitted_actions(time());
+            $transaction->allow_commit();
+
+            // Log this action.
+            $params = [
+                'objectid' => $quizattemptobj->get_question_attempt($slot)->get_question_id(),
+                'courseid' => $quizattemptobj->get_courseid(),
+                'context' => $quizattemptobj->get_quizobj()->get_context(),
+                'other' => [
+                    'quizid' => $quizattemptobj->get_quizid(),
+                    'attemptid' => $quizattemptobj->get_attemptid(),
+                    'slot' => $slot,
+                ],
+            ];
+            $event = \tool_ucsfsomapi\event\question_attempt_marked::create($params);
+            $event->trigger();
+
+            return GRADE_UPDATE_OK;
+        } else {
+            return GRADE_UPDATE_FAILED;
+        }
+    }
+
+    /**
+     * Define the webservice response for set_question_attempt_mark.
+     *
+     * @return external_description|null always null.
+     */
+    public static function set_question_attempt_mark_returns(): ?external_description {
+        global $CFG;
+        require_once($CFG->dirroot . '/lib/grade/constants.php');
+
+        return new external_value(
+            PARAM_INT,
+            'A value like ' . GRADE_UPDATE_OK . ' => OK, '
+                    . GRADE_UPDATE_FAILED . ' => FAILED as defined in lib/grade/constants.php'
         );
     }
 }

@@ -70,6 +70,15 @@ $functions = [
         'ajax' => false,
         'services' => ['ucsf_som_api'],
     ],
+    'tool_ucsfsomapi_set_question_attempt_mark' => [
+        'classname' => 'tool_ucsfsomapi\external\api',
+        'methodname' => 'set_question_attempt_mark',
+        'description' => 'Marks a given question attempt.',
+        'type' => 'write',
+        'capabilities' => 'mod/quiz:grade',
+        'ajax' => false,
+        'services' => ['ucsf_som_api'],
+    ],
 ];
 
 $services = [
