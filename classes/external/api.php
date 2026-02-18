@@ -69,8 +69,10 @@ class api extends external_api {
 
         $rhett = [];
 
-        $params = self::validate_parameters(self::get_courses_parameters(),
-            ['categoryids' => $params]);
+        $params = self::validate_parameters(
+            self::get_courses_parameters(),
+            ['categoryids' => $params]
+        );
 
         if (empty($params['categoryids'])) {
             return $rhett;
@@ -92,8 +94,10 @@ class api extends external_api {
 
             $courseadmin = has_capability('moodle/course:update', $context);
 
-            if ($courseadmin || $course->visible
-                || has_capability('moodle/course:viewhiddencourses', $context)) {
+            if (
+                $courseadmin || $course->visible
+                || has_capability('moodle/course:viewhiddencourses', $context)
+            ) {
                 $rhett[] = [
                     'id' => $course->id,
                     'categoryid' => $course->category,
@@ -113,10 +117,11 @@ class api extends external_api {
     public static function get_courses_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['categoryids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Category ID')
-                , 'List of category IDs.',
+                new external_value(PARAM_INT, 'Category ID'),
+                'List of category IDs.',
                 VALUE_REQUIRED
-            )]);
+            )]
+        );
     }
 
     /**
@@ -152,14 +157,16 @@ class api extends external_api {
 
         $rhett = [];
 
-        $params = self::validate_parameters(self::get_quizzes_parameters(),
-            ['courseids' => $params]);
+        $params = self::validate_parameters(
+            self::get_quizzes_parameters(),
+            ['courseids' => $params]
+        );
 
         // Get the quizzes in this course, this function checks users visibility permissions.
         // We can avoid then additional validate_context calls.
         // Todo: figure out what to do with warnings. (probably eat them) [ST 2021/04/14].
         $courseids = clean_param_array($params['courseids'], PARAM_INT);
-        list($courses, $warnings) = util::validate_courses($courseids);
+        [$courses, $warnings] = util::validate_courses($courseids);
         $quizzes = get_all_instances_in_courses("quiz", $courses);
 
         foreach ($quizzes as $quiz) {
@@ -197,8 +204,8 @@ class api extends external_api {
     public static function get_quizzes_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['courseids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Course ID')
-                , 'List of course IDs.',
+                new external_value(PARAM_INT, 'Course ID'),
+                'List of course IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -246,14 +253,16 @@ class api extends external_api {
 
         $rhett = [];
 
-        $params = self::validate_parameters(self::get_questions_parameters(),
-            ['quizids' => $params]);
+        $params = self::validate_parameters(
+            self::get_questions_parameters(),
+            ['quizids' => $params]
+        );
 
         $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
         foreach ($quizzes as $quiz) {
             // See mod_quiz_external::validate_quiz.
-            list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
+            [$course, $cm] = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
             try {
                 self::validate_context($context);
@@ -314,12 +323,17 @@ class api extends external_api {
                             $question->id
                         );
                         $rhett[$question->id]['options']['graderinfo'] = util::format_text(
-                            $graderinfowithlinks, $question->options->graderinfoformat, $context)[0];
+                            $graderinfowithlinks,
+                            $question->options->graderinfoformat,
+                            $context
+                        )[0];
                     }
                     // Add question answers, if there are any.
-                    if (property_exists($question, 'options')
+                    if (
+                        property_exists($question, 'options')
                         && property_exists($question->options, 'answers')
-                        && $question->options->answers) {
+                        && $question->options->answers
+                    ) {
                         foreach ($question->options->answers as $answer) {
                             $answerwithfilelinks = question_rewrite_question_urls(
                                 $answer->answer,
@@ -369,8 +383,8 @@ class api extends external_api {
     public static function get_questions_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Quiz ID')
-                , 'List of quiz IDs.',
+                new external_value(PARAM_INT, 'Quiz ID'),
+                'List of quiz IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -454,15 +468,17 @@ class api extends external_api {
 
         $rhett = [];
 
-        $params = self::validate_parameters(self::get_attempts_parameters(),
-            ['quizids' => $params]);
+        $params = self::validate_parameters(
+            self::get_attempts_parameters(),
+            ['quizids' => $params]
+        );
 
         $quizzes = self::get_quizzes_by_ids($params['quizids']);
 
         foreach ($quizzes as $quiz) {
             // Validate against the quiz-owning course context.
             // See \mod_quiz_external::validate_quiz.
-            list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
+            [$course, $cm] = get_course_and_cm_from_instance($quiz, 'quiz');
             $context = context_module::instance($cm->id);
             try {
                 self::validate_context($context);
@@ -472,7 +488,7 @@ class api extends external_api {
 
             // Load finalized attempts.
             // Todo: figure out if only finalized attempts should be included [ST 2021/04/16].
-            list($sql, $sqlparams) = $DB->get_in_or_equal($quiz->id, SQL_PARAMS_NAMED);
+            [$sql, $sqlparams] = $DB->get_in_or_equal($quiz->id, SQL_PARAMS_NAMED);
             $sqlparams['state1'] = quiz_attempt::FINISHED;
             $sqlparams['state2'] = quiz_attempt::ABANDONED;
             $quizattempts = $DB->get_records_select(
@@ -519,8 +535,8 @@ class api extends external_api {
     public static function get_attempts_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['quizids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Quiz ID')
-                , 'List of quiz IDs.',
+                new external_value(PARAM_INT, 'Quiz ID'),
+                'List of quiz IDs.',
                 VALUE_REQUIRED,
             )]
         );
@@ -568,8 +584,10 @@ class api extends external_api {
 
         $rhett = [];
 
-        $params = self::validate_parameters(self::get_users_parameters(),
-            ['userids' => $params]);
+        $params = self::validate_parameters(
+            self::get_users_parameters(),
+            ['userids' => $params]
+        );
 
         if (empty($params['userids'])) {
             return [];
@@ -577,7 +595,7 @@ class api extends external_api {
 
         $userids = clean_param_array($params['userids'], PARAM_INT);
 
-        list($sql, $sqlparams) = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
+        [$sql, $sqlparams] = $DB->get_in_or_equal($userids, SQL_PARAMS_NAMED);
         $users = $DB->get_records_select(
             'user',
             "id $sql AND deleted = 0",
@@ -603,8 +621,8 @@ class api extends external_api {
     public static function get_users_parameters(): external_function_parameters {
         return new external_function_parameters(
             ['userids' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'User ID')
-                , 'List of user IDs.',
+                new external_value(PARAM_INT, 'User ID'),
+                'List of user IDs.',
                 VALUE_REQUIRED
             )]
         );
@@ -638,7 +656,7 @@ class api extends external_api {
             return [];
         }
         $quizids = clean_param_array($quizids, PARAM_INT);
-        list($sql, $sqlparams) = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
+        [$sql, $sqlparams] = $DB->get_in_or_equal($quizids, SQL_PARAMS_NAMED);
         return $DB->get_records_select(
             'quiz',
             "id $sql",
@@ -661,7 +679,7 @@ class api extends external_api {
             return [];
         }
         $entryid = clean_param($entryid, PARAM_INT);
-        list($sql, $sqlparams) = $DB->get_in_or_equal($entryid, SQL_PARAMS_NAMED);
+        [$sql, $sqlparams] = $DB->get_in_or_equal($entryid, SQL_PARAMS_NAMED);
         return $DB->get_records_select(
             'question_versions',
             "questionbankentryid $sql",
@@ -680,7 +698,8 @@ class api extends external_api {
             [
                 'attemptid' => new external_value(PARAM_INT, 'The question attempt id to set mark.'),
                 'mark' => new external_value(PARAM_TEXT, 'Mark for this question attempt.'),
-                'comment'  => new external_value(PARAM_RAW,
+                'comment'  => new external_value(
+                    PARAM_RAW,
                     'Grader\'s comment for this question attempt (optional)',
                     VALUE_DEFAULT
                 ),
@@ -780,30 +799,33 @@ class api extends external_api {
         $prefix = $qa->get_field_prefix();
 
         // Set the sequence check count to the latest value.
-        $_POST[$prefix.":sequencecheck"] = $qa->get_sequence_check_count();
+        $_POST[$prefix . ":sequencecheck"] = $qa->get_sequence_check_count();
 
         $_POST["attempt"] = (string) $quizattemptid;
         $_POST["slot"] = (string) $slot;
         $_POST["slots"] = (string) $slot;      // This is set to $slot in /mod/quiz/comment.php, line 122 (is this a bug?).
-        $_POST[$prefix."-mark"] = (string) $mark;
-        $_POST[$prefix."-maxmark"] = $qa->get_max_mark();
-        $_POST[$prefix.":minfraction"] = $qa->get_min_fraction();
-        $_POST[$prefix.":maxfraction"] = $qa->get_max_fraction();
+        $_POST[$prefix . "-mark"] = (string) $mark;
+        $_POST[$prefix . "-maxmark"] = $qa->get_max_mark();
+        $_POST[$prefix . ":minfraction"] = $qa->get_min_fraction();
+        $_POST[$prefix . ":maxfraction"] = $qa->get_max_fraction();
 
         // Set the comment text and format.
         // See if there is a comment already.
-        list($commenttext, $commentformat, $commentstep) = $qa->get_current_manual_comment();
+        [$commenttext, $commentformat, $commentstep] = $qa->get_current_manual_comment();
         if (!empty($commentstep)) {
-                list($draftitemid, $commenttext) = $commentstep->prepare_response_files_draft_itemid_with_text(
-                'bf_comment', $quizattemptobj->get_quizobj()->get_context()->id, $commenttext);
+                [$draftitemid, $commenttext] = $commentstep->prepare_response_files_draft_itemid_with_text(
+                    'bf_comment',
+                    $quizattemptobj->get_quizobj()->get_context()->id,
+                    $commenttext
+                );
         } else {
             $draftitemid = file_get_unused_draft_itemid();
         }
-        $_POST[$prefix."-comment"] = $comment ?? $commenttext;
-        $_POST[$prefix."-commentformat"] = $commentformat;  // Consider to use FORMAT_PLAIN, 2 (See lib/weblib.php L54).
-        $_POST[$prefix."-comment:itemid"] = $draftitemid;
+        $_POST[$prefix . "-comment"] = $comment ?? $commenttext;
+        $_POST[$prefix . "-commentformat"] = $commentformat;  // Consider to use FORMAT_PLAIN, 2 (See lib/weblib.php L54).
+        $_POST[$prefix . "-comment:itemid"] = $draftitemid;
         // This needs to be in $_REQUEST as well for the file picker to work. (ref. lib/filelib.php L881).
-        $_REQUEST[$prefix."-comment:itemid"] = $draftitemid;
+        $_REQUEST[$prefix . "-comment:itemid"] = $draftitemid;
 
         // Process any data that was submitted.
         if (question_engine::is_manual_grade_in_range($quizattemptobj->get_uniqueid(), $slot)) {

@@ -53,7 +53,7 @@ function tool_ucsfsomapi_question_preview_pluginfile(
     global $CFG;
     require_once($CFG->dirroot . '/mod/quiz/locallib.php');
 
-    list($context, $course, $cm) = get_context_info_array($previewcontext->id);
+    [$context, $course, $cm] = get_context_info_array($previewcontext->id);
     require_login($course, false, $cm);
 
     // Check capabilities. Apply the same check as on the corresponding tool_ucsfsomapi_get_questions API endpoint.

@@ -39,7 +39,6 @@ namespace tool_ucsfsomapi\event;
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class question_attempt_marked extends \core\event\base {
-
     /**
      * Init method.
      */
