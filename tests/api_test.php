@@ -778,8 +778,11 @@ final class api_test extends externallib_advanced_testcase {
             ['category' => $category->id]
         );
 
+        $question3 = $questiongenerator->create_question('essay', 'editor', ['category' => $category->id]);
+
         quiz_add_quiz_question($question1->id, $quiz);
         quiz_add_quiz_question($question2->id, $quiz);
+        quiz_add_quiz_question($question3->id, $quiz);
 
         // Retrieve attempts for the quiz, should come up empty-handed.
         $rhett = external_api::clean_returnvalue(
@@ -825,8 +828,8 @@ final class api_test extends externallib_advanced_testcase {
         $timestart2 = (new DateTime('2024-04-03 12:00:00'))->getTimestamp();
         $timefinish2 = (new DateTime('2024-04-03 13:00:00'))->getTimestamp();
 
-        $answers1 = [1 => 'True', 2 => '100'];
-        $answers2 = [1 => 'False', 2 => '3.14'];
+        $answers1 = [1 => 'True', 2 => '100', 3 => 'Lorem Ipsum'];
+        $answers2 = [1 => 'False', 2 => '3.14', 3 => 'A > B, look this one has brackets'];
         $attemptobj1 = $attemptquiz($student1, $answers1, $timestart1, $timefinish1);
         $attemptobj2 = $attemptquiz($student2, $answers2, $timestart2, $timefinish2);
 
@@ -843,7 +846,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertEquals($student1->id, $rhett[0]['userid']);
         $this->assertEquals($timestart1, $rhett[0]['timestart']);
         $this->assertEquals($timefinish1, $rhett[0]['timefinish']);
-        $this->assertCount(2, $rhett[0]['questions']);
+        $this->assertCount(3, $rhett[0]['questions']);
         $this->assertEquals($question1->id, $rhett[0]['questions'][0]['id']);
         $this->assertEquals(
             $attemptobj1->get_question_usage()->get_question_attempt(1)->get_database_id(),
@@ -858,13 +861,21 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals(0.0, $rhett[0]['questions'][1]['mark']); // Wrong answer.
         $this->assertEquals($answers1[2], $rhett[0]['questions'][1]['answer']);
+        $this->assertEquals($answers2[2], $rhett[1]['questions'][1]['answer']);
+        $this->assertEquals($question3->id, $rhett[0]['questions'][2]['id']);
+        $this->assertEquals(
+            $attemptobj1->get_question_usage()->get_question_attempt(3)->get_database_id(),
+            $rhett[0]['questions'][2]['attemptid']
+        );
+        $this->assertNull($rhett[0]['questions'][2]['mark']); // Essay questions have no grade.
+        $this->assertEquals($answers1[3], $rhett[0]['questions'][2]['answer']);
 
         $this->assertEquals($attemptobj2->get_attempt()->id, $rhett[1]['id']);
         $this->assertEquals($quiz->id, $rhett[1]['quizid']);
         $this->assertEquals($student2->id, $rhett[1]['userid']);
         $this->assertEquals($timestart2, $rhett[1]['timestart']);
         $this->assertEquals($timefinish2, $rhett[1]['timefinish']);
-        $this->assertCount(2, $rhett[1]['questions']);
+        $this->assertCount(3, $rhett[1]['questions']);
         $this->assertEquals($question1->id, $rhett[1]['questions'][0]['id']);
         $this->assertEquals(
             $attemptobj2->get_question_usage()->get_question_attempt(1)->get_database_id(),
@@ -879,6 +890,13 @@ final class api_test extends externallib_advanced_testcase {
         );
         $this->assertEquals(1.0, $rhett[1]['questions'][1]['mark']); // Correct answer.
         $this->assertEquals($answers2[2], $rhett[1]['questions'][1]['answer']);
+        $this->assertEquals($question3->id, $rhett[1]['questions'][2]['id']);
+        $this->assertEquals(
+            $attemptobj2->get_question_usage()->get_question_attempt(3)->get_database_id(),
+            $rhett[1]['questions'][2]['attemptid']
+        );
+        $this->assertNull($rhett[1]['questions'][2]['mark']); // Essay questions have no grade.
+        $this->assertEquals($answers2[3], $rhett[1]['questions'][2]['answer']);
     }
 
     /**

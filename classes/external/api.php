@@ -516,7 +516,7 @@ class api extends external_api {
                         'id' => $questionattempt->get_question_id(),
                         'attemptid' => $questionattempt->get_database_id(),
                         'mark' => $questionattempt->get_mark(),
-                        'answer' => util::format_string($questionattempt->get_response_summary(), $context),
+                        'answer' => $questionattempt->get_response_summary(),
                     ];
                 }
 
