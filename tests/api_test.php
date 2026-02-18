@@ -50,7 +50,6 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
  * @covers \tool_ucsfsomapi\external\api
  */
 final class api_test extends externallib_advanced_testcase {
-
     /**
      * {@inheritDoc}
      */
@@ -67,7 +66,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(1, $structure->keys);
 
         $innerstructure = $structure->keys['categoryids'];
-        $this->assertTrue( $innerstructure instanceof external_multiple_structure);
+        $this->assertTrue($innerstructure instanceof external_multiple_structure);
         $this->assertEquals('List of category IDs.', $innerstructure->desc);
         $this->assertEquals(VALUE_REQUIRED, $innerstructure->required);
 
@@ -89,19 +88,19 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(3, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Course ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['name'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Course Name', $componentvalue->desc);
         $this->assertEquals(PARAM_TEXT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['categoryid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Course Category ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
@@ -151,7 +150,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(1, $structure->keys);
 
         $innerstructure = $structure->keys['courseids'];
-        $this->assertTrue( $innerstructure instanceof external_multiple_structure);
+        $this->assertTrue($innerstructure instanceof external_multiple_structure);
         $this->assertEquals('List of course IDs.', $innerstructure->desc);
         $this->assertEquals(VALUE_REQUIRED, $innerstructure->required);
 
@@ -173,25 +172,25 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(5, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Quiz ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['name'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Quiz Name', $componentvalue->desc);
         $this->assertEquals(PARAM_TEXT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['courseid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Course ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['coursemoduleid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Course ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
@@ -204,13 +203,13 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(2, $innerstructure2->keys);
 
         $componentvalue = $innerstructure2->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure2->keys['maxmarks'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Maximum marks for this question.', $componentvalue->desc);
         $this->assertEquals(PARAM_FLOAT, $componentvalue->type);
@@ -288,7 +287,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(1, $structure->keys);
 
         $innerstructure = $structure->keys['quizids'];
-        $this->assertTrue( $innerstructure instanceof external_multiple_structure);
+        $this->assertTrue($innerstructure instanceof external_multiple_structure);
         $this->assertEquals('List of quiz IDs.', $innerstructure->desc);
         $this->assertEquals(VALUE_REQUIRED, $innerstructure->required);
 
@@ -310,37 +309,37 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(10, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['name'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question name', $componentvalue->desc);
         $this->assertEquals(PARAM_TEXT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['text'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question text', $componentvalue->desc);
         $this->assertEquals(PARAM_RAW, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['generalfeedback'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('General feedback for this question', $componentvalue->desc);
         $this->assertEquals(PARAM_RAW, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['type'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question type', $componentvalue->desc);
         $this->assertEquals(PARAM_TEXT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['defaultmarks'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Default marks for this question.', $componentvalue->desc);
         $this->assertEquals(PARAM_FLOAT, $componentvalue->type);
@@ -358,13 +357,13 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertTrue($componentvalue instanceof external_multiple_structure);
 
         $innercomponent = $componentvalue->content;
-         $this->assertTrue( $innercomponent instanceof external_value);
+         $this->assertTrue($innercomponent instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $innercomponent->required);
         $this->assertEquals('Question ID', $innercomponent->desc);
         $this->assertEquals(PARAM_INT, $innercomponent->type);
 
         $componentvalue = $innerstructure->keys['questionbankentryid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('The question bank entry id for this question', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
@@ -477,9 +476,9 @@ final class api_test extends externallib_advanced_testcase {
 
         // Update the third question.
         $question3 = $questiongenerator->update_question(
-                $question3,
-                null,
-                [
+            $question3,
+            null,
+            [
                     'name' => 'A new name',
                     'generalfeedback' => ['text' => '   ', 'format' => FORMAT_MOODLE],
                 ]
@@ -674,7 +673,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(1, $structure->keys);
 
         $innerstructure = $structure->keys['quizids'];
-        $this->assertTrue( $innerstructure instanceof external_multiple_structure);
+        $this->assertTrue($innerstructure instanceof external_multiple_structure);
         $this->assertEquals('List of quiz IDs.', $innerstructure->desc);
         $this->assertEquals(VALUE_REQUIRED, $innerstructure->required);
 
@@ -696,31 +695,31 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(6, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Attempt ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['quizid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Quiz ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['userid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('User ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['timestart'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Timestamp of when this attempt was started.', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['timefinish'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Timestamp of when this attempt was finished.', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
@@ -732,19 +731,19 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertTrue($innerstructure2 instanceof external_single_structure);
 
         $componentvalue = $innerstructure2->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Question ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure2->keys['mark'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Mark received', $componentvalue->desc);
         $this->assertEquals(PARAM_FLOAT, $componentvalue->type);
 
         $componentvalue = $innerstructure2->keys['answer'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('Answer given', $componentvalue->desc);
         $this->assertEquals(PARAM_RAW, $componentvalue->type);
@@ -764,7 +763,7 @@ final class api_test extends externallib_advanced_testcase {
         // Create a quiz in this course.
         $quiz = $this->getDataGenerator()->create_module('quiz', ['course' => $course->id, 'name' => 'Foo', 'sumgrades' => 2]);
         // Get a hold of the quiz module contexts.
-        list($course, $cm) = get_course_and_cm_from_instance($quiz, 'quiz');
+        [$course, $cm] = get_course_and_cm_from_instance($quiz, 'quiz');
         // Create three questions and add them to the quiz.
         $questiongenerator = $this->getDataGenerator()->get_plugin_generator('core_question');
         $category = $questiongenerator->create_question_category();
@@ -798,8 +797,8 @@ final class api_test extends externallib_advanced_testcase {
 
         // Simulate a quiz attempt with the given student and answers.
         // @see /mod/quiz/tests/external/external_test.php for reference.
-        $attemptquiz = function(object $student, array $responses, int $timestart, int $timefinish)
-            use ($quiz, $studentrole, $questiongenerator): quiz_attempt {
+        $attemptquiz = function (object $student, array $responses, int $timestart, int $timefinish)
+ use ($quiz, $studentrole, $questiongenerator): quiz_attempt {
             // Create a new quiz attempt.
             $quizsettings = quiz_settings::create($quiz->id, $student->id);
             $quba = question_engine::make_questions_usage_by_activity('mod_quiz', $quizsettings->get_context());
@@ -890,7 +889,7 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(1, $structure->keys);
 
         $innerstructure = $structure->keys['userids'];
-        $this->assertTrue( $innerstructure instanceof external_multiple_structure);
+        $this->assertTrue($innerstructure instanceof external_multiple_structure);
         $this->assertEquals('List of user IDs.', $innerstructure->desc);
         $this->assertEquals(VALUE_REQUIRED, $innerstructure->required);
 
@@ -912,13 +911,13 @@ final class api_test extends externallib_advanced_testcase {
         $this->assertCount(2, $innerstructure->keys);
 
         $componentvalue = $innerstructure->keys['id'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('User ID', $componentvalue->desc);
         $this->assertEquals(PARAM_INT, $componentvalue->type);
 
         $componentvalue = $innerstructure->keys['ucid'];
-        $this->assertTrue( $componentvalue instanceof external_value);
+        $this->assertTrue($componentvalue instanceof external_value);
         $this->assertEquals(VALUE_REQUIRED, $componentvalue->required);
         $this->assertEquals('UC ID', $componentvalue->desc);
         $this->assertEquals(PARAM_TEXT, $componentvalue->type);
@@ -1234,9 +1233,9 @@ final class api_test extends externallib_advanced_testcase {
         $this->expectException(\moodle_exception::class);
         $this->expectExceptionMessage(
             'Invalid parameter value detected (Invalid external api parameter: '
-            .'the value is "' . $invalidcomment . '", the server was expecting "raw" type): '
-            .'Invalid external api parameter: the value is "' . $invalidcomment . '", '
-            .'the server was expecting "raw" type'
+            . 'the value is "' . $invalidcomment . '", the server was expecting "raw" type): '
+            . 'Invalid external api parameter: the value is "' . $invalidcomment . '", '
+            . 'the server was expecting "raw" type'
         );
 
         // Call the API function with valid parameters.
@@ -1337,7 +1336,9 @@ final class api_test extends externallib_advanced_testcase {
         $startattempt = false,
         $finishattempt = false,
         $behaviour = 'deferredfeedback',
-            $includeqattachments = false, $extraoptions = []) {
+        $includeqattachments = false,
+        $extraoptions = []
+    ) {
         global $DB;
 
         // Create a course.
@@ -1424,6 +1425,5 @@ final class api_test extends externallib_advanced_testcase {
         } else {
             return [$course, $quiz, $context, $quizobj];
         }
-
     }
 }
