@@ -809,7 +809,7 @@ final class api_test extends externallib_advanced_testcase {
             $attemptnumber = count(quiz_get_user_attempts($quizsettings->get_quizid(), $student->id)) + 1;
             $attempt = quiz_create_attempt($quizsettings, $attemptnumber, false, $timestart, false, $student->id);
             quiz_start_new_attempt($quizsettings, $quba, $attempt, $attemptnumber, $timestart);
-            quiz_attempt_save_started($quizsettings, $quba, $attempt);
+            quiz_attempt_save_started($quizsettings, $quba, $attempt, $timestart);
             $attemptobj = quiz_attempt::create($attempt->id);
             // Answer all questions.
             $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
