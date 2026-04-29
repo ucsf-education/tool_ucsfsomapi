@@ -1437,7 +1437,9 @@ final class api_test extends externallib_advanced_testcase {
                 $attemptobj->process_submitted_actions(time(), false, $postdata);
 
                 // Finish the attempt.
-                $attemptobj->process_finish(time(), false);
+                $now = time();
+                $attemptobj->process_submit($now, false);
+                $attemptobj->process_grade_submission($now);
             }
             return [$course, $quiz, $context, $quizobj, $attempt, $attemptobj, $quba];
         } else {
