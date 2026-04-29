@@ -818,8 +818,10 @@ final class api_test extends externallib_advanced_testcase {
                 true,
             );
             $attemptobj->process_submitted_actions($timestart, false, $postdata);
+
             // Finish the attempt.
-            $attemptobj->process_attempt($timefinish, true, false, 1);
+            $attemptobj->process_submit($timefinish, false);
+            $attemptobj->process_grade_submission($timefinish);
             return $attemptobj;
         };
 
