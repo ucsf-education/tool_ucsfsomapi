@@ -35,6 +35,7 @@ use DateTime;
 use externallib_advanced_testcase;
 use mod_quiz\quiz_attempt;
 use mod_quiz\quiz_settings;
+use PHPUnit\Framework\Attributes\CoversClass;
 use question_bank;
 use question_engine;
 use tool_ucsfsomapi\external\api;
@@ -46,9 +47,8 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
 
 /**
  * Test coverage for UCSF SOM API web services class.
- *
- * @covers \tool_ucsfsomapi\external\api
  */
+#[CoversClass(api::class)]
 final class api_test extends externallib_advanced_testcase {
     /**
      * {@inheritDoc}
