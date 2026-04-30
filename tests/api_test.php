@@ -35,6 +35,7 @@ use DateTime;
 use externallib_advanced_testcase;
 use mod_quiz\quiz_attempt;
 use mod_quiz\quiz_settings;
+use PHPUnit\Framework\Attributes\CoversClass;
 use question_bank;
 use question_engine;
 use tool_ucsfsomapi\external\api;
@@ -46,9 +47,8 @@ require_once($CFG->dirroot . '/webservice/tests/helpers.php');
 
 /**
  * Test coverage for UCSF SOM API web services class.
- *
- * @covers \tool_ucsfsomapi\external\api
  */
+#[CoversClass(api::class)]
 final class api_test extends externallib_advanced_testcase {
     /**
      * {@inheritDoc}
@@ -809,7 +809,7 @@ final class api_test extends externallib_advanced_testcase {
             $attemptnumber = count(quiz_get_user_attempts($quizsettings->get_quizid(), $student->id)) + 1;
             $attempt = quiz_create_attempt($quizsettings, $attemptnumber, false, $timestart, false, $student->id);
             quiz_start_new_attempt($quizsettings, $quba, $attempt, $attemptnumber, $timestart);
-            quiz_attempt_save_started($quizsettings, $quba, $attempt);
+            quiz_attempt_save_started($quizsettings, $quba, $attempt, $timestart);
             $attemptobj = quiz_attempt::create($attempt->id);
             // Answer all questions.
             $postdata = $questiongenerator->get_simulated_post_data_for_questions_in_usage(
@@ -818,8 +818,10 @@ final class api_test extends externallib_advanced_testcase {
                 true,
             );
             $attemptobj->process_submitted_actions($timestart, false, $postdata);
+
             // Finish the attempt.
-            $attemptobj->process_attempt($timefinish, true, false, 1);
+            $attemptobj->process_submit($timefinish, false);
+            $attemptobj->process_grade_submission($timefinish);
             return $attemptobj;
         };
 
@@ -1437,7 +1439,9 @@ final class api_test extends externallib_advanced_testcase {
                 $attemptobj->process_submitted_actions(time(), false, $postdata);
 
                 // Finish the attempt.
-                $attemptobj->process_finish(time(), false);
+                $now = time();
+                $attemptobj->process_submit($now, false);
+                $attemptobj->process_grade_submission($now);
             }
             return [$course, $quiz, $context, $quizobj, $attempt, $attemptobj, $quba];
         } else {

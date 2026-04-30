@@ -25,8 +25,8 @@
 defined('MOODLE_INTERNAL') || die;
 
 $plugin->component = 'tool_ucsfsomapi';
-$plugin->version   = 2025071101;
-$plugin->requires  = 2024100100;
-$plugin->release   = 'v4.5';
-$plugin->supported = [405, 405];
+$plugin->version   = 2026042900;
+$plugin->requires  = 2025092600;
+$plugin->release   = 'v5.1.0';
+$plugin->supported = [501, 501];
 $plugin->maturity  = MATURITY_STABLE;
