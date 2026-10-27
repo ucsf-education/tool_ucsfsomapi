@@ -8,4 +8,4 @@ on:
 
 jobs:
   ci:
-    uses: ucsf-education/moodle-plugin-ci-reusable-workflow/.github/workflows/gha.yml@MOODLE_501_STABLE
+    uses: ucsf-education/moodle-plugin-ci-reusable-workflow/.github/workflows/gha.yml@MOODLE_502_STABLE
